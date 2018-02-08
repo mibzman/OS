@@ -31,7 +31,7 @@ void printLogo();
 void main()
 {
    makeInterrupt21();
-   // printLogo();
+   printLogo();
    interrupt(33,0,"Hello world from Sam Borick\r\n\0",1,0);
    /* interrupt(33,0,"Hola mondo.\r\n\0",0,0); */
    while(1);
