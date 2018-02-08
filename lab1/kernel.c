@@ -19,7 +19,7 @@
 /*                                                                        */
 /*                                                                        */
 /*                                                                        */
-/* Signed:_____________________________________ Date:_____________        */
+/* Signed:_Sam Borick___ Date:_02/08/18____        */
 /*                                                                        */
 /*                                                                        */
 /* 3460:4/526 BlackDOS2020 kernel, Version 1.01, Spring 2018.             */
@@ -31,8 +31,8 @@ void printLogo();
 void main()
 {
    makeInterrupt21();
-   printLogo();
-   printString("Hello world.\r\n\0",1);
+   // printLogo();
+   interrupt(33,0,"Hello world from Sam Borick\r\n\0",1,0);
    /* interrupt(33,0,"Hola mondo.\r\n\0",0,0); */
    while(1);
 }
@@ -79,7 +79,6 @@ void printLogo()
 
 void handleInterrupt21(int ax, int bx, int cx, int dx)
 {
-   return;
    switch(ax) {  
       case 0: printString(bx,cx); break; 
 /*      case 1: case 2: case 3: case 4: case 5: */
@@ -87,4 +86,5 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
 /*      case 11: case 12: case 13: case 14: case 15: */
       default: printString("General BlackDOS error.\r\n\0"); 
    }  
+   return;
 }
