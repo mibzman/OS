@@ -1,1 +1,9 @@
 samborick/
+
+bochsout.txt
+kernel.o
+bootload
+floppya.img
+kernel_asm.o
+kernel
+printer.out
