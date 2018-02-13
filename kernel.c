@@ -66,7 +66,7 @@ void printLogo()
    printString("   //   \\\\        | |_) | | (_| | (__|   <| |__| | |__| |____) |\r\n\0",0);
    printString("._/'     `\\.      |____/|_|\\__,_|\\___|_|\\_\\_____/ \\____/|_____/\r\n\0",0);
    printString(" BlackNOS2020 v. 1.01, c. 2018. Based on a project by M. Black. \r\n\0",0);
-   printString(" Author(s): your name(s) here.\r\n\r\n\0",0);
+   printString(" Author: Sam Borick.\r\n\r\n\0",0);
 }
 
 /* MAKE FUTURE UPDATES HERE */
