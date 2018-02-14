@@ -30,6 +30,10 @@ void printChar(char*);
 void readString(char[80]);
 void readInt(int* n);
 void printLogo();
+void printInt(int input);
+
+int mod(int a, int b);
+int div(int a, int b);
 
 void main()
 {
@@ -48,11 +52,14 @@ void main()
 
    printString("Please enter the number 4: \r\n\0" , 0);
    readInt(&resultNumber);
-   if (resultNumber == 4){
-      printString("You wrote 4! good! \r\n\0" , 0);   
-   } else {
-      printString("You did not write 4! bad! \r\n\0" , 0);   
-   }
+   printInt(resultNumber);
+
+
+   // if (resultNumber == 4){
+   //    printString("You wrote 4! good! \r\n\0" , 0);   
+   // } else {
+   //    printString("You did not write 4! bad! \r\n\0" , 0);   
+   // }
    
 
    while(1);
@@ -81,6 +88,35 @@ void printChar(char* c)
    int ax = ah * 256 + al;
    interrupt(16, ax, 0, 0, 0);
    return;
+}
+
+void printInt(int input) {
+   char result[80];
+   int counter = 0;
+   int temp;
+
+   if (input == 0){
+         printChar('0');
+         return;
+   }
+
+   if (input < 0){
+      result[0] = '-';
+      input = input * -1;
+      counter++;
+   }
+
+   //fill our array with null terminators so we don't have to do it later
+   for(temp=input; temp > 0; temp = div(temp, 10), counter++){
+      result[counter] = '\0';
+   }
+   //now our counter is at the 'end' of our string
+
+   for (temp=input; temp > 0; temp = div(temp, 10)){
+      result[--counter] = mod(temp, 10) + '0';
+   }
+
+   printString(result, 0);
 }
 
 void printLogo()
@@ -154,4 +190,16 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
       default: printString("General BlackDOS error.\r\n\0"); 
    }  
    return;
+}
+
+int mod(int a, int b) {
+ int x = a;
+ while (x >= b) x = x - b;
+ return x;
+}
+
+int div(int a, int b) {
+ int q = 0;
+ while (q * b <= a) q++;
+ return (q - 1);
 }
