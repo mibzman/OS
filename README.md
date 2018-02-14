@@ -1,12 +1,15 @@
-# Sam Borick
-## Lab 1
+# BlackDOS Project, Spring 2018
+## Sam Borick
 
-For this project I modified kernel.c to be able to:
+### Currently, this OS can:
 
-1. Print output
-2. Print output to screen or printer
-3. Access print output functions via an interrupt
+1. Accept string or integer input
+2. Print strings or integers
 
-This was accomplished by modifying the printstring function, and also by uncommenting the handleInterrupt21 re-routes, and allowing the assembler to handle the interrupting.
+Currently on startup the OS runs an example game of madlibs.  This game accepts several inputs, and prints out a story congaing those inputs to the printer.  This is output to the printer.out file.
 
-This can be tested by running compileOS.sh.  the result should be a boch emulator showing the blackdos logo, and a new file titled printer.out should contain "hello world from sam borick"
+This can be tested by running compileOS.sh.  The result should run in the boch emulator.
+
+### Note:
+
+Currently the OS has been observed to crash on startup.  This occurs sporadically, and when run again (rarely after as many as 3 attempts) the machine boots as expected.  The cause of this is currently unknown.
