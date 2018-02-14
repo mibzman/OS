@@ -26,14 +26,19 @@
 
 void handleInterrupt21(int,int,int,int);
 void printString(char*,int);
+void printChar(char*);
+void readString(char[80]);
 void printLogo();
 
 void main()
 {
+   char input[80];
+
    makeInterrupt21();
    printLogo();
-   interrupt(33,0,"Hello world from Sam Borick\r\n\0",1,0);
-   /* interrupt(33,0,"Hola mondo.\r\n\0",0,0); */
+   // interrupt(33,0,"Hello world from Sam Borick\r\n\0",1,0);
+   readString(input);
+
    while(1);
 }
 
@@ -46,14 +51,19 @@ void printString(char* c, int d)
       }
       return;
    }
-   while(*c != '\0'){ 
-      char al = *c;
-      char ah = 14;
-      int ax = ah * 256 + al;
-      interrupt(16, ax, 0, 0, 0);
+   while(*c != '\0'){
+      printChar(c);
       c++;
    }
-   /* fill this in */
+   return;
+}
+
+void printChar(char* c)
+{
+   char al = *c;
+   char ah = 14;
+   int ax = ah * 256 + al;
+   interrupt(16, ax, 0, 0, 0);
    return;
 }
 
@@ -69,13 +79,38 @@ void printLogo()
    printString(" Author: Sam Borick.\r\n\r\n\0",0);
 }
 
-/* MAKE FUTURE UPDATES HERE */
-/* VVVVVVVVVVVVVVVVVVVVVVVV */
+void readString(char line[80]) {
+   int counter = 0;
+   // char peee = 'n';
+   char* charHolder;
+   // char ascii;
+   // char realLetter;
+   // int aciiNum;
+   do{
+      charHolder = interrupt(22,0,0,0,0);
+      
+      // ascii = *charHolder;
 
+      // if (*charHolder == '\0'){
+      //    continue;
+      // }
+      // else if (*charHolder == '\r'){
+      //    line[counter] = '\0';
+      //    counter++;
+      // } else if (*charHolder == '\b'){
+      //    counter--;
+      // } else {
+      //    line[counter] = *charHolder;
+      //    counter++;
+      // }
+      // interrupt(16, charHolder, 0, 0, 0);
+      
+      // printChar(charHolder);
+      printChar(&charHolder);
 
-
-/* ^^^^^^^^^^^^^^^^^^^^^^^^ */
-/* MAKE FUTURE UPDATES HERE */
+   }while(*charHolder != '\n');
+   printString("finished\r\n\0", 0);
+}
 
 void handleInterrupt21(int ax, int bx, int cx, int dx)
 {
