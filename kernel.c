@@ -164,9 +164,13 @@ void readString(char line[80]) {
    char* realCharPointer;
    char realChar;
    do{
+      //doesn't return a char pointer pointing to a space in memory that contains the ASCII value (i.e. a char), 
+      //it just returns the ASCII value typed incorrectly 
       charHolder = interrupt(22,0,0,0,0);
       realCharPointer = &charHolder;
       realChar = *realCharPointer;
+      // Note that we pass a pointer to charHolder (a pointer pointer), 
+      //which is then dereferenced and read as a char.
 
       if (realChar == '\0'){
          continue;
