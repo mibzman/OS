@@ -28,7 +28,7 @@ void handleInterrupt21(int,int,int,int);
 void printString(char*,int);
 void printChar(char*);
 void readString(char[80]);
-int readInt();
+void readInt(int* n);
 void printLogo();
 
 void main()
@@ -47,7 +47,7 @@ void main()
 
 
    printString("Please enter the number 4: \r\n\0" , 0);
-   resultNumber = readInt();
+   readInt(&resultNumber);
    if (resultNumber == 4){
       printString("You wrote 4! good! \r\n\0" , 0);   
    } else {
@@ -124,11 +124,11 @@ void readString(char line[80]) {
    printString("\n\0",0);
 }
 
-int readInt() {
+void readInt(int* output) {
    char input[80];
    int sign = 1;
    int counter = -1;
-   int output = 0;
+   int result = 0;
 
    readString(input);
 
@@ -138,16 +138,19 @@ int readInt() {
    }
 
    while (input[++counter] != '\0') { //iterate until the array end
-     output = output*10 + (input[counter] - '0'); //generating the integer according to read parsed numbers.
+     result = result*10 + (input[counter] - '0'); //generating the integer according to read parsed numbers.
    }
 
-   output = output*sign;
+   result = result*sign;
+   *output = result;
 }
 
 void handleInterrupt21(int ax, int bx, int cx, int dx)
 {
    switch(ax) {  
       case 0: printString(bx,cx); break;
+      // case 13: readString(bx); break;
+      // case 0: printString(bx,cx); break;
       default: printString("General BlackDOS error.\r\n\0"); 
    }  
    return;
