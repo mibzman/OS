@@ -28,11 +28,13 @@ void handleInterrupt21(int,int,int,int);
 void printString(char*,int);
 void printChar(char*);
 void readString(char[80]);
+int readInt();
 void printLogo();
 
 void main()
 {
    char input[80];
+   int resultNumber;
 
    makeInterrupt21();
    printLogo();
@@ -41,6 +43,17 @@ void main()
    readString(input);
    printString("You wrote: \0" , 0);
    printString(input, 0);
+   printString("\r\n\0", 0);
+
+
+   printString("Please enter the number 4: \r\n\0" , 0);
+   resultNumber = readInt();
+   if (resultNumber == 4){
+      printString("You wrote 4! good! \r\n\0" , 0);   
+   } else {
+      printString("You did not write 4! bad! \r\n\0" , 0);   
+   }
+   
 
    while(1);
 }
@@ -109,6 +122,26 @@ void readString(char line[80]) {
 
    }while(realChar != '\r');
    printString("\n\0",0);
+}
+
+int readInt() {
+   char input[80];
+   int sign = 1;
+   int counter = -1;
+   int output = 0;
+
+   readString(input);
+
+   if (input[0] == '-') {
+     sign = -1;
+     counter = 0;
+   }
+
+   while (input[++counter] != '\0') { //iterate until the array end
+     output = output*10 + (input[counter] - '0'); //generating the integer according to read parsed numbers.
+   }
+
+   output = output*sign;
 }
 
 void handleInterrupt21(int ax, int bx, int cx, int dx)
