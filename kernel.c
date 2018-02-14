@@ -37,7 +37,10 @@ void main()
    makeInterrupt21();
    printLogo();
    // interrupt(33,0,"Hello world from Sam Borick\r\n\0",1,0);
+   printString("Please enter a command: \r\n\0" , 0);
    readString(input);
+   printString("You wrote: \0" , 0);
+   printString(input, 0);
 
    while(1);
 }
@@ -81,44 +84,37 @@ void printLogo()
 
 void readString(char line[80]) {
    int counter = 0;
-   // char peee = 'n';
    char* charHolder;
-   // char ascii;
-   // char realLetter;
-   // int aciiNum;
+   char* realCharPointer;
+   char realChar;
    do{
       charHolder = interrupt(22,0,0,0,0);
-      
-      // ascii = *charHolder;
+      realCharPointer = &charHolder;
+      realChar = *realCharPointer;
 
-      // if (*charHolder == '\0'){
-      //    continue;
-      // }
-      // else if (*charHolder == '\r'){
-      //    line[counter] = '\0';
-      //    counter++;
-      // } else if (*charHolder == '\b'){
-      //    counter--;
-      // } else {
-      //    line[counter] = *charHolder;
-      //    counter++;
-      // }
-      // interrupt(16, charHolder, 0, 0, 0);
+      if (realChar == '\0'){
+         continue;
+      }
+      else if (realChar == '\r'){
+         line[counter] = '\0';
+         counter++;
+      } else if (realChar == '\b'){
+         counter--;
+      } else {
+         line[counter] = realChar;
+         counter++;
+      }
       
-      // printChar(charHolder);
       printChar(&charHolder);
 
-   }while(*charHolder != '\n');
-   printString("finished\r\n\0", 0);
+   }while(realChar != '\r');
+   printString("\n\0",0);
 }
 
 void handleInterrupt21(int ax, int bx, int cx, int dx)
 {
    switch(ax) {  
-      case 0: printString(bx,cx); break; 
-/*      case 1: case 2: case 3: case 4: case 5: */
-/*      case 6: case 7: case 8: case 9: case 10: */
-/*      case 11: case 12: case 13: case 14: case 15: */
+      case 0: printString(bx,cx); break;
       default: printString("General BlackDOS error.\r\n\0"); 
    }  
    return;
