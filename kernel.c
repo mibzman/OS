@@ -185,8 +185,8 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
 {
    switch(ax) {  
       case 0: printString(bx,cx); break;
-      // case 13: readString(bx); break;
-      // case 0: printString(bx,cx); break;
+      case 13: printInt(bx); break;
+      case 14: readInt(bx); break;
       default: printString("General BlackDOS error.\r\n\0"); 
    }  
    return;
