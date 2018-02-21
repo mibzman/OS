@@ -36,7 +36,7 @@ void readInt(int* n);
 void readSector(char*, int);
 void writeSector(char*, int);
 
-// void clearScreen(char*, char*);
+void clearScreen(char*, char*);
 
 void playMadLibs();
 
@@ -45,18 +45,17 @@ int div(int a, int b);
 
 void main()
 {
-   char buffer[512]; 
-   buffer[0] = 'p';
-
+   char buffer[512]; int i;
    makeInterrupt21();
+   for (i = 0; i < 512; i++) buffer[i] = 0;
+   buffer[0] = 0;
+   buffer[1] = 2;
+   interrupt(33,6,buffer,258,0);
+   interrupt(33,12,buffer[0]+1,buffer[1]+1,0);
    printLogo();
-
-   // playMadLibs();
-
    interrupt(33,2,buffer,30,0);
    interrupt(33,0,buffer,0,0);
-   
-   while(1);
+   while (1) ;
 }
 
 void playMadLibs(){
@@ -133,6 +132,16 @@ void writeSector(char* buffer, int absSecNo) {
    DX = headNo * 256;
 
    interrupt(16, 769, buffer, CX, DX);
+}
+
+void clearScreen(int bx, int cx) {
+   int val = 4096 * (bx - 1) + 256 * (cx - 1);
+   printString("\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\0");
+   interrupt(16,512,0,0,0);
+   if (bx > 0 && cx > 0){
+      interrupt(16, 1536, val, 0, 6223);
+   }
+
 }
 
 void printString(char* c, int d)
@@ -264,13 +273,15 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
       case 1: readString(bx); break;
       case 2: readSector(bx,cx); break;
       case 6: writeSector(bx,cx); break;
-      // case 12: clearScreen(bx,cx); break;
+      case 12: clearScreen(bx,cx); break;
       case 13: printInt(bx,cx); break;
       case 14: readInt(bx); break;
       default: printString("General BlackDOS error.\r\n\0"); 
    }  
    return;
 }
+
+
 
 int mod(int a, int b) {
  int x = a;
