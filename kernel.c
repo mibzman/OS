@@ -25,12 +25,18 @@
 /* 3460:4/526 BlackDOS2020 kernel, Version 1.01, Spring 2018.             */
 
 void handleInterrupt21(int,int,int,int);
+
 void printString(char*,int);
 void printChar(char*);
-void readString(char[80]);
-void readInt(int* n);
 void printLogo();
 void printInt(int input, int mode);
+void readString(char[80]);
+void readInt(int* n);
+
+void readSector(char*, int);
+void writeSector(char*, int);
+
+// void clearScreen(char*, char*);
 
 void playMadLibs();
 
@@ -88,6 +94,36 @@ void playMadLibs(){
    interrupt(33,0,"currently rewriting the program and hope you will accept it late.\r\n\0",1,0);
    interrupt(33,0,"\r\nSincerely,\r\n\0",1,0);
    interrupt(33,0,"Sam Borick\r\n\0",1,0);
+}
+
+void readSector(char* buffer, int absSecNo) {
+   int AX = 513;
+   int BX = buffer;
+   int CX;
+   int DX;
+
+   int trackNo;
+   int relSecNo;
+   int headNo;
+
+   relSecNo = mod(absSecNo, 18) + 1;
+   headNo = mod(div(absSecNo, 18), 2);
+   trackNo = div(absSecNo, 36);
+
+   CX = trackNo * 256 + relSecNo;
+   DX = headNo * 256;
+
+   interrupt(19, AX, BX, CX, DX);
+}
+
+void writeSector(char* buffer, int sector) {
+   int ax;
+   int bx;
+   int cx;
+   int dx;
+
+
+   interrupt(19, ax, bx, cx, dx);
 }
 
 void printString(char* c, int d)
@@ -217,6 +253,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
    switch(ax) {  
       case 0: printString(bx,cx); break;
       case 1: readString(bx); break;
+      case 2: readSector(bx,cx); break;
+      case 6: writeSector(bx,cx); break;
+      // case 12: clearScreen(bx,cx); break;
       case 13: printInt(bx,cx); break;
       case 14: readInt(bx); break;
       default: printString("General BlackDOS error.\r\n\0"); 
