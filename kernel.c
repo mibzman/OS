@@ -131,7 +131,7 @@ void writeSector(char* buffer, int absSecNo) {
    CX = trackNo * 256 + relSecNo;
    DX = headNo * 256;
 
-   interrupt(16, 769, buffer, CX, DX);
+   interrupt(19, 769, buffer, CX, DX);
 }
 
 void clearScreen(int bx, int cx) {
