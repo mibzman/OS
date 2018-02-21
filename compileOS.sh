@@ -22,3 +22,5 @@ dd if=kernel of=floppya.img bs=512 conv=notrunc seek=259
 dd if=msg of=floppya.img bs=512 count=1 seek=30 conv=notrunc
 
 bochs -f osxterm.txt
+
+dd if=floppy.img of=config bs=512 skip=258 count=1 conv=notrunc
