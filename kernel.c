@@ -45,13 +45,16 @@ int div(int a, int b);
 
 void main()
 {
-   char input[80];
-   int resultNumber;
+   char buffer[512]; 
+   buffer[0] = 'p';
 
    makeInterrupt21();
    printLogo();
 
-   playMadLibs();
+   // playMadLibs();
+
+   interrupt(33,2,buffer,30,0);
+   interrupt(33,0,buffer,0,0);
    
    while(1);
 }
@@ -97,8 +100,8 @@ void playMadLibs(){
 }
 
 void readSector(char* buffer, int absSecNo) {
-   int AX = 513;
-   int BX = buffer;
+   // int AX = ;
+   // int BX = buffer;
    int CX;
    int DX;
 
@@ -113,7 +116,7 @@ void readSector(char* buffer, int absSecNo) {
    CX = trackNo * 256 + relSecNo;
    DX = headNo * 256;
 
-   interrupt(19, AX, BX, CX, DX);
+   interrupt(19, 513, buffer, CX, DX);
 }
 
 void writeSector(char* buffer, int sector) {
