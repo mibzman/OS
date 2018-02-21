@@ -100,8 +100,6 @@ void playMadLibs(){
 }
 
 void readSector(char* buffer, int absSecNo) {
-   // int AX = ;
-   // int BX = buffer;
    int CX;
    int DX;
 
@@ -119,14 +117,22 @@ void readSector(char* buffer, int absSecNo) {
    interrupt(19, 513, buffer, CX, DX);
 }
 
-void writeSector(char* buffer, int sector) {
-   int ax;
-   int bx;
-   int cx;
-   int dx;
+void writeSector(char* buffer, int absSecNo) {
+   int CX;
+   int DX;
 
+   int trackNo;
+   int relSecNo;
+   int headNo;
 
-   interrupt(19, ax, bx, cx, dx);
+   relSecNo = mod(absSecNo, 18) + 1;
+   headNo = mod(div(absSecNo, 18), 2);
+   trackNo = div(absSecNo, 36);
+
+   CX = trackNo * 256 + relSecNo;
+   DX = headNo * 256;
+
+   interrupt(16, 769, buffer, CX, DX);
 }
 
 void printString(char* c, int d)
