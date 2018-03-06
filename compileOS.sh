@@ -1,14 +1,11 @@
 #!/bin/bash
-rm bochsout.txt
-rm kernel.o
-rm bootload
-rm floppya.img
-rm kernel_asm.o
-rm kernel
-rm printer.out
+git rm --cached `git ls-files -i --exclude-from=.gitignore`
 
 #!/bin/bash -e
 set -e
+
+# build tools used
+gcc loadFile.c -o loadFile
 
 nasm bootload.asm
 touch floppya.img
@@ -24,5 +21,7 @@ as86 kernel.asm -o kernel_asm.o
 ld86 -o kernel -d kernel.o kernel_asm.o
 dd if=kernel of=floppya.img bs=512 conv=notrunc seek=259
 dd if=msg of=floppya.img bs=512 count=1 seek=30 conv=notrunc
+
+./loadFile spc02
 
 bochs -f osxterm.txt

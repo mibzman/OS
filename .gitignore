@@ -7,3 +7,5 @@ floppya.img
 kernel_asm.o
 kernel
 printer.out
+loadFile
+a.out
