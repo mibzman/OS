@@ -15,6 +15,10 @@ touch floppya.img
 dd if=/dev/zero of=floppya.img bs=512 count=2880
 dd if=bootload of=floppya.img bs=512 count=1 conv=notrunc
 
+# added in lab 4
+dd if=map of=floppya.img bs=512 count=1 seek=256 conv=notrunc
+dd if=config of=floppya.img bs=512 count=1 seek=258 conv=notrunc
+
 bcc -ansi -c -o kernel.o kernel.c
 as86 kernel.asm -o kernel_asm.o
 ld86 -o kernel -d kernel.o kernel_asm.o
