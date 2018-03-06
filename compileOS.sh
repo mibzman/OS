@@ -25,3 +25,5 @@ dd if=msg of=floppya.img bs=512 count=1 seek=30 conv=notrunc
 ./loadFile spc02
 
 bochs -f osxterm.txt
+
+dd if=floppy.img of=config bs=512 skip=258 count=1 conv=notrunc
