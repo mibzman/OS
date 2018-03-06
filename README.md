@@ -31,7 +31,3 @@ I have violated neither the spirit nor letter of these restrictions.
 
 
 3460:4/526 BlackDOS2020 kernel, Version 1.01, Spring 2018.
-=======
-- (Resolved?) Currently the OS has been observed to crash on startup.  This occurs sporadically, and when run again (rarely after as many as 3 attempts) the machine boots as expected.  The cause of this is currently unknown.
-
-- compileOS.sh attempts to copy the contents of the config after bochs exits, however this command will not be run if force exited.
