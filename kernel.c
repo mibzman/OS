@@ -8,6 +8,9 @@ void error(int);
 void readSector(char*, int);
 void writeSector(char*, int);
 
+//file
+void readFile(char*, char*, int*);
+
 //screen management
 void printString(char*,int);
 void printChar(char*);
@@ -23,21 +26,28 @@ void printLogo();
 void playMadLibs();
 
 //util
+char strncpy(char, const char, int);
+int strCmp(char, char);
 int mod(int a, int b);
 int div(int a, int b);
 
 void main()
 {
-   char buffer[512]; int i;
-   makeInterrupt21();
-   for (i = 0; i < 512; i++) buffer[i] = 0;
-   buffer[0] = 0;
-   buffer[1] = 2;
-   interrupt(33,6,buffer,258,0);
-   interrupt(33,12,buffer[0]+1,buffer[1]+1,0);
-   printLogo();
-   interrupt(33,2,buffer,30,0);
-   interrupt(33,0,buffer,0,0);
+   char buffer[12288]; int size;
+    makeInterrupt21();
+
+    /* Step 0 – config file */
+    interrupt(33,2,buffer,258,0);
+    interrupt(33,12,buffer[0]+1,buffer[1]+1,0);
+    printLogo();
+
+    /* Step 1 – load/edit/print file */
+    interrupt(33,3,"spc02\0",buffer,&size);
+    // buffer[7] = ‘2’; buffer[8] = ‘0’;
+    // buffer[9] = ‘1’; buffer[10] = ‘8’;
+    interrupt(33,0,buffer,0,0);
+    // printString("read portion complete\r\n\0", 0);
+   
    while (1) ;
 }
 
@@ -47,10 +57,14 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
       case 0: printString(bx,cx); break;
       case 1: readString(bx); break;
       case 2: readSector(bx,cx); break;
+      case 3: readFile(bx,cx,dx); break;
       case 6: writeSector(bx,cx); break;
+      // case 7: deleteFile(bx); break;
+      // case 8: writeFile(bx,cx,dx); break;
       case 12: clearScreen(bx,cx); break;
       case 13: printInt(bx,cx); break;
       case 14: readInt(bx); break;
+      case 15: error(bx); break;
       default: printString("General BlackDOS error.\r\n\0", 0); 
    }  
    return;
@@ -58,9 +72,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
 
 void error(int bx){
    switch(bx){
-      case 0: printString("File not found.\r\n\0", 0);
-      case 1: printString("Bad file name.\r\n\0", 0);
-      case 2: printString("Disk full.\r\n\0", 0);
+      case 0: printString("File not found.\r\n\0", 0); break;
+      case 1: printString("Bad file name.\r\n\0", 0); break;
+      case 2: printString("Disk full.\r\n\0", 0); break;
       default: printString("General Error.\r\n\0", 0);
    }  
    while (1) ;
@@ -100,6 +114,32 @@ void writeSector(char* buffer, int absSecNo) {
    DX = headNo * 256;
 
    interrupt(19, 769, buffer, CX, DX);
+}
+
+void readFile(char* fname, char* buffer, int* size) {
+   char fileDir[512];
+   char tempBuffer[512];
+   int counter = 0;
+   int sectorCounter = 0;
+
+   readSector(fileDir, 257); 
+
+   for (counter; counter < 512; counter = counter + 32) {
+      if (strCmp(fname, fileDir + counter) == 0){
+         counter = counter + 8;
+         for (sectorCounter; sectorCounter < 10; sectorCounter = sectorCounter + 1){
+            readSector(tempBuffer, fileDir[counter + sectorCounter]);
+
+            strncpy(buffer + (512*sectorCounter), tempBuffer, 512);
+
+            // printString(buffer, 0);
+            // buffer = buffer + 512;
+         }
+         return;
+      }
+   }
+   error(0);
+   return;
 }
 
 void printString(char* c, int d)
@@ -272,6 +312,28 @@ void playMadLibs(){
    interrupt(33,0,"currently rewriting the program and hope you will accept it late.\r\n\0",1,0);
    interrupt(33,0,"\r\nSincerely,\r\n\0",1,0);
    interrupt(33,0,"Sam Borick\r\n\0",1,0);
+}
+
+char strncpy(char *dst, char *src, int n) {
+   int i;
+   char *temp;
+   temp = dst;  
+   for (i = 0; i < n; i++)
+      *dst++ = *src++;
+   return temp;
+}
+
+int strCmp(char a[], char b[]) {
+   int i = 0;
+   for (i; ; i++) {
+      if (a[i] != b[i]) {
+         return a[i] < b[i] ? -1 : 1;
+      }
+
+      if (a[i] == '\0') {
+         return 0;
+      }
+   }
 }
 
 int mod(int a, int b) {
