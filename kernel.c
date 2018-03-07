@@ -12,7 +12,7 @@ int findEmptySector(char*);
 //file
 void readFile(char*, char*, int*);
 void writeFile(char*, char*, int);
-// void deleteFile(char*);
+void deleteFile(char*);
 
 //screen management
 void printString(char*,int);
@@ -37,7 +37,7 @@ int div(int a, int b);
 void main()
 {
    char buffer[12288]; int size;
-
+   char buffer2[12288];
     makeInterrupt21();
 
     /* Step 0 – config file */
@@ -46,17 +46,17 @@ void main()
     printLogo();
 
     /* Step 1 – load/edit/print file */
-    interrupt(33,3,"spc02\0",buffer,&size);
-    buffer[7] = '2'; buffer[8] = '0';
-    buffer[9] = '1'; buffer[10] = '8';
+    interrupt(33,3,"spc02\0",buffer2,&size);
+    buffer2[7] = '2'; buffer2[8] = '0';
+    buffer2[9] = '1'; buffer2[10] = '8';
     printString("printing first time\r\n\0",0);
-    interrupt(33,0,buffer,0,0);
+    interrupt(33,0,buffer2,0,0);
 
-    // printString("save revised\r\n\0",0);
+    printString("save revised\r\n\0",0);
     
     // /* Step 2 – write revised file */
     // interrupt(33,8,"spr18\0",buffer,size);
-    // printString("getting back\r\n\0",0);
+    // printString("\r\ngetting back\r\n\0",0);
 
     // interrupt(33,3,"spr18\0",buffer,&size);
     // printString("printing\r\n\0",0);
@@ -91,8 +91,7 @@ void error(int bx){
    switch(bx){
       case 0: printString("File not found.\r\n\0", 0); break;
       case 1: printString("Bad file name.\r\n\0", 0); break;
-      case 2: printString("Disk full.\r\n\0", 0); break;
-      case 3: printString("Debugging Breakpoint hit.\r\n\0", 0); break;
+      case 2: printString("Disk full.\r\n\0", 0); break; case 3: printString("Debugging Breakpoint hit.\r\n\0", 0); break;
       default: printString("General Error.\r\n\0", 0);
    }  
    while (1) ;
@@ -144,129 +143,146 @@ int findEmptySector(char* map) {
    return 600;
 }
 
-void readFile(char* fname, char* buffer, int* size) {
-   char fileDir[512];
-   char tempBuffer[512];
-   int counter = 0;
-   int sectorCounter = 0;
-
+void readFile(char* fname, char* buffer, int* size)
+{
+   char dir[512];
+   int i = 0, bufferCounter, counter;
    *size = 0;
 
-   readSector(fileDir, 257); 
+   readSector(dir, 257);
 
-   for (counter; counter < 512; counter = counter + 32) {
-      if (strCmp(fname, fileDir + counter) == 0){
-         counter = counter + 8;
-         for (sectorCounter; sectorCounter < 24; sectorCounter = sectorCounter + 1){
-            readSector(tempBuffer, fileDir[counter + sectorCounter]);
+   for(; i < 16; i++)
+   {
+      if(strCmp(fname, &dir[bufferCounter]))
+      { 
 
-            strnCpy(buffer + (512*sectorCounter), tempBuffer, 512);
-            *size = *size + 1;
+         counter = bufferCounter + 8;
 
-            // printString(buffer, 0);
-            // buffer = buffer + 512;
+         while(dir[counter] != 0)
+         {
+            readSector(buffer, dir[counter]);
+            buffer += 512;
+            *size += 512;
+            counter++;
          }
          return;
       }
+      bufferCounter += 32;
    }
+
    error(0);
    return;
 }
 
-void writeFile(char* name, char* buffer, int numberOfSectors) {
-   char fileDir[512];
-   char map[512];
-   char filenameHolder[6];
-   char emptyBuffer[512];
-   char tempBuffer[512];
-   int counter = 0;
+void writeFile(char* name, char* buffer, int numberOfSectors)
+{
+   char map[512], disk[512];
+   int free_directory = 0, free_sector = 0, disk_byte = 0, i = 0, y = 6;
 
-   int diridx = 600;
-   int diridxCounter;
+   readSector(map, 256);
+   readSector(disk, 257);
 
-   int tempidx = 600; 
-
-   readSector(map, 256); 
-   readSector(fileDir, 257); 
-
-   for (counter; counter < 512; counter = counter + 32) {
-      if (strCmp(name, fileDir + counter) == 0){
+   while (disk_byte < 512)
+   {
+     // check if file already exists
+     if (disk[disk_byte] != 0x0)
+       if (strCmp(name, &disk[disk_byte]))
+       {
          error(1);
          return;
-      }
+       }
+    
+     // saves the first free sector
+     if (free_directory == 0)
+       if (disk[disk_byte] == 0x0)
+         free_directory = disk_byte;
+     
+    disk_byte = disk_byte + 32;
    }
 
-   diridx = findEmptySector(map);
+   if (free_directory == 0) return;
 
-   if (diridx == 600) {
-      error(2);
-      return;
+   // first set all 32 bits to 0
+   for (i = 0; i < 32; ++i)
+   {
+     disk[free_directory + i] = 0x0;
+   }
+    
+   // save the name of the file
+   for (i = 0; i < y; ++i)
+   {
+     if (*(name + i) == 0x0) break;
+     disk[free_directory + i] = *(name + i);
    }
 
-   //this should take care of the padding
-   strnCpy(filenameHolder, name, 6);
-   //insert name
-   map[diridx] = 255;
-   strnCpy(fileDir + diridx, filenameHolder, 6);
-   diridxCounter = diridx + 8;
-
-   counter = 0;
-   for (counter; counter < numberOfSectors; counter++) {
-      strnCpy(tempBuffer, emptyBuffer, 512);
-      
-      tempidx = findEmptySector(map);
-
-      if (tempidx == 600) {
-         error(2);
-         return;
-      }
-
-      map[counter] = 255;
-      fileDir[diridxCounter] = counter;
-
-      //write sector will get the length right
-      strnCpy(tempBuffer, buffer + (counter * 512), 512);
-      writeSector(tempBuffer, counter);
-
-      tempidx = 600;
+   for (i = 0; i < numberOfSectors; ++i)
+   {
+     for (y = 0; y < 256; ++y)
+     {
+       if (map[y] == 0x0)
+       {
+         map[y] = 255;
+         disk[free_directory + 8 + i] = y;
+         writeSector(buffer,y);
+         buffer = buffer + 512;
+         y = 512;
+         ++free_sector;
+       }
+     }
    }
 
-   for (diridxCounter; diridxCounter < diridx + 32; diridxCounter++ ){
-      fileDir[diridxCounter] = 0;
-   } 
+   if (free_sector != numberOfSectors) return;
 
    writeSector(map, 256);
-   writeSector(fileDir, 257);
+   writeSector(disk, 257);
+
+   return;
 }
 
-// void deleteFile(char* name){
-//    char fileDir[512];
-//    char map[512];
-//    int counter = 0;
-//    int endDirSector;
+void deleteFile(char* name)
+{
+   char map[512], disk[512];
+   char* current;
+   int found = 0, i;
 
-//    readSector(map, 256); 
-//    readSector(fileDir, 257); 
+   /* load disk directory and map to 512 byte character arrays */
+   readSector(map, 256);
+   readSector(disk, 257);
 
-//    for (counter; counter < 512; counter = counter + 32) {
-//       if (strCmp(name, fileDir + counter) == 0){
-//          error(1);
-//          return;
-//       }
-//    }
+   current = disk;
 
-//    fileDir[counter] = 0;
-//    map[counter] = 0;
-//    endDirSector = counter + 32;
-//    counter = counter + 8;
+   /* search through the directory and try to find the file name */
+   for(i = 0; i < 16; i++)
+   {
+      if(strCmp(name, current))
+      {
+         found = 1;
 
-//    for (counter; counter < endDirSector; counter++){
-//       map[fileDir[counter]] = 0;
-//    }
+         /* set the first byte of file to zero */
+         *current = 0x0;
+         current += 6;
 
-//    writeSector(map, 256);
-//    writeSector(fileDir, 257);
-// }
+         /* step through sector numbers belonging to file and set map byte to zero */
+         while(*current != 0x0)
+         {
+            map[*current] = 0x0;
+            current++;
+         }
+      }
+
+      current += 32;
+   }
+
+   if(!found)
+   {
+      error(0);
+   }
+   else printString("DELETED! :)\r\n\0");
+
+   /* write the char arrays holding the directory and map back to sectors */
+   writeSector(map, 256);
+   writeSector(disk, 257);
+}
 
 void printString(char* c, int d)
 {
