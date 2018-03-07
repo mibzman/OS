@@ -12,11 +12,17 @@ Currently on startup the OS sets a color scheme (currently l33t HAXOR), then rea
 
 This can be tested by running compileOS.sh.  The result should run in the boch emulator.
 
+run `hexdump –C floppy.img > dump` to dump the floppy
+
 ### Notes:
 
 - (Resolved?) Currently the OS has been observed to crash on startup. This occurs sporadically, and when run again (rarely after as many as 3 attempts) the machine boots as expected. The cause of this is currently unknown.
 
 - compileOS.sh attempts to copy the contents of the config after bochs exits, however this command will not be run if force exited.
+
+
+
+
 
 ## ACADEMIC INTEGRITY PLEDGE 
 - I have not used source code obtained from another student nor any other unauthorized source, either modified or unmodified.
