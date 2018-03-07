@@ -12,6 +12,7 @@ int findEmptySector(char*);
 //file
 void readFile(char*, char*, int*);
 void writeFile(char*, char*, int);
+// void deleteFile(char*);
 
 //screen management
 void printString(char*,int);
@@ -51,14 +52,14 @@ void main()
     printString("printing first time\r\n\0",0);
     interrupt(33,0,buffer,0,0);
 
-    printString("save revised\r\n\0",0);
+    // printString("save revised\r\n\0",0);
     
-    /* Step 2 – write revised file */
-    interrupt(33,8,"spr18\0",buffer,size);
-    printString("getting back\r\n\0",0);
+    // /* Step 2 – write revised file */
+    // interrupt(33,8,"spr18\0",buffer,size);
+    // printString("getting back\r\n\0",0);
 
-    interrupt(33,3,"spr18\0",buffer,&size);
-    printString("printing\r\n\0",0);
+    // interrupt(33,3,"spr18\0",buffer,&size);
+    // printString("printing\r\n\0",0);
     // interrupt(33,0,buffer,0,0);
     // printString("printed\r\n\0",0);
 
@@ -237,6 +238,35 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
    writeSector(map, 256);
    writeSector(fileDir, 257);
 }
+
+// void deleteFile(char* name){
+//    char fileDir[512];
+//    char map[512];
+//    int counter = 0;
+//    int endDirSector;
+
+//    readSector(map, 256); 
+//    readSector(fileDir, 257); 
+
+//    for (counter; counter < 512; counter = counter + 32) {
+//       if (strCmp(name, fileDir + counter) == 0){
+//          error(1);
+//          return;
+//       }
+//    }
+
+//    fileDir[counter] = 0;
+//    map[counter] = 0;
+//    endDirSector = counter + 32;
+//    counter = counter + 8;
+
+//    for (counter; counter < endDirSector; counter++){
+//       map[fileDir[counter]] = 0;
+//    }
+
+//    writeSector(map, 256);
+//    writeSector(fileDir, 257);
+// }
 
 void printString(char* c, int d)
 {
