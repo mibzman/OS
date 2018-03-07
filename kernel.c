@@ -10,6 +10,7 @@ void writeSector(char*, int);
 
 //file
 void readFile(char*, char*, int*);
+void writeFile(char*, char*, int);
 
 //screen management
 void printString(char*,int);
@@ -60,7 +61,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
       case 3: readFile(bx,cx,dx); break;
       case 6: writeSector(bx,cx); break;
       // case 7: deleteFile(bx); break;
-      // case 8: writeFile(bx,cx,dx); break;
+      case 8: writeFile(bx,cx,dx); break;
       case 12: clearScreen(bx,cx); break;
       case 13: printInt(bx,cx); break;
       case 14: readInt(bx); break;
@@ -127,7 +128,7 @@ void readFile(char* fname, char* buffer, int* size) {
    for (counter; counter < 512; counter = counter + 32) {
       if (strCmp(fname, fileDir + counter) == 0){
          counter = counter + 8;
-         for (sectorCounter; sectorCounter < 10; sectorCounter = sectorCounter + 1){
+         for (sectorCounter; sectorCounter < 24; sectorCounter = sectorCounter + 1){
             readSector(tempBuffer, fileDir[counter + sectorCounter]);
 
             strncpy(buffer + (512*sectorCounter), tempBuffer, 512);
@@ -140,6 +141,16 @@ void readFile(char* fname, char* buffer, int* size) {
    }
    error(0);
    return;
+}
+
+void writeFile(char* name, char* buffer, int numberOfSectors) {
+   char fileDir[512];
+   char map[512];
+
+   readSector(fileDir, 256); 
+   readSector(fileDir, 257); 
+
+
 }
 
 void printString(char* c, int d)
