@@ -242,7 +242,7 @@ void writeFile(char * name, char * buffer, int numberOfSectors) {
       if (map[y] == 0x0) {
         map[y] = 255;
         disk[freeDir + 8 + i] = y;
-        
+
         writeSector(buffer, y);
         buffer = buffer + 512;
 
@@ -261,24 +261,22 @@ void writeFile(char * name, char * buffer, int numberOfSectors) {
 void deleteFile(char * name) {
   char map[512], disk[512];
   char * current;
-  int found = 0, i;
+  int found = 0
+  int i;
 
-  /* load disk directory and map to 512 byte character arrays */
   readSector(map, 256);
   readSector(disk, 257);
 
   current = disk;
 
-  /* search through the directory and try to find the file name */
+
   for (i = 0; i < 16; i++) {
     if (strCmp(name, current)) {
       found = 1;
 
-      /* set the first byte of file to zero */
       * current = 0x0;
-      current += 6;
+      current += 8;
 
-      /* step through sector numbers belonging to file and set map byte to zero */
       while ( * current != 0x0) {
         map[ * current] = 0x0;
         current++;
@@ -290,9 +288,9 @@ void deleteFile(char * name) {
 
   if (!found) {
     error(0);
-  } else printString("DELETED! :)\r\n\0");
+    return;
+  }
 
-  /* write the char arrays holding the directory and map back to sectors */
   writeSector(map, 256);
   writeSector(disk, 257);
 }
