@@ -12,6 +12,7 @@ int findEmptySector(char*);
 //file
 void readFile(char*, char*, int*);
 void writeFile(char*, char*, int);
+void deleteFile(char*);
 
 //screen management
 void printString(char*,int);
@@ -48,21 +49,13 @@ void main()
     interrupt(33,3,"spc02\0",buffer,&size);
     buffer[7] = '2'; buffer[8] = '0';
     buffer[9] = '1'; buffer[10] = '8';
-    printString("printing first time\r\n\0",0);
     interrupt(33,0,buffer,0,0);
 
-    printString("save revised\r\n\0",0);
-    
     /* Step 2 – write revised file */
-    interrupt(33,8,"spr18\0",buffer,size);
-    printString("getting back\r\n\0",0);
+    // interrupt(33,8,"spr18\0",buffer,size);
 
-    interrupt(33,3,"spr18\0",buffer,&size);
-    printString("printing\r\n\0",0);
-    // interrupt(33,0,buffer,0,0);
-    // printString("printed\r\n\0",0);
-
-
+    /* Step 3 – delete original file */
+    // interrupt(33,7,"spc02\0",0,0);
    
    while (1) ;
 }
@@ -75,7 +68,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
       case 2: readSector(bx,cx); break;
       case 3: readFile(bx,cx,dx); break;
       case 6: writeSector(bx,cx); break;
-      // case 7: deleteFile(bx); break;
+      case 7: deleteFile(bx); break;
       case 8: writeFile(bx,cx,dx); break;
       case 12: clearScreen(bx,cx); break;
       case 13: printInt(bx,cx); break;
@@ -233,6 +226,35 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
    for (diridxCounter; diridxCounter < diridx + 32; diridxCounter++ ){
       fileDir[diridxCounter] = 0;
    } 
+
+   writeSector(map, 256);
+   writeSector(fileDir, 257);
+}
+
+void deleteFile(char* name){
+   char fileDir[512];
+   char map[512];
+   int counter = 0;
+   int endDirSector;
+
+   readSector(map, 256); 
+   readSector(fileDir, 257); 
+
+   for (counter; counter < 512; counter = counter + 32) {
+      if (strCmp(name, fileDir + counter) == 0){
+         error(1);
+         return;
+      }
+   }
+
+   fileDir[counter] = 0;
+   map[counter] = 0;
+   endDirSector = counter + 32;
+   counter = counter + 8;
+
+   for (counter; counter < endDirSector; counter++){
+      map[fileDir[counter]] = 0;
+   }
 
    writeSector(map, 256);
    writeSector(fileDir, 257);
