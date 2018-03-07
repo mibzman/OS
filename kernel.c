@@ -7,9 +7,12 @@ void error(int);
 //disk
 void readSector(char*, int);
 void writeSector(char*, int);
+int findEmptySector(char*);
 
 //file
 void readFile(char*, char*, int*);
+void writeFile(char*, char*, int);
+void deleteFile(char*);
 
 //screen management
 void printString(char*,int);
@@ -26,7 +29,7 @@ void printLogo();
 void playMadLibs();
 
 //util
-char strncpy(char, const char, int);
+char strnCpy(char, const char, int);
 int strCmp(char, char);
 int mod(int a, int b);
 int div(int a, int b);
@@ -34,6 +37,7 @@ int div(int a, int b);
 void main()
 {
    char buffer[12288]; int size;
+
     makeInterrupt21();
 
     /* Step 0 – config file */
@@ -43,10 +47,15 @@ void main()
 
     /* Step 1 – load/edit/print file */
     interrupt(33,3,"spc02\0",buffer,&size);
-    // buffer[7] = ‘2’; buffer[8] = ‘0’;
-    // buffer[9] = ‘1’; buffer[10] = ‘8’;
+    buffer[7] = '2'; buffer[8] = '0';
+    buffer[9] = '1'; buffer[10] = '8';
     interrupt(33,0,buffer,0,0);
-    // printString("read portion complete\r\n\0", 0);
+
+    /* Step 2 – write revised file */
+    // interrupt(33,8,"spr18\0",buffer,size);
+
+    /* Step 3 – delete original file */
+    // interrupt(33,7,"spc02\0",0,0);
    
    while (1) ;
 }
@@ -59,8 +68,8 @@ void handleInterrupt21(int ax, int bx, int cx, int dx)
       case 2: readSector(bx,cx); break;
       case 3: readFile(bx,cx,dx); break;
       case 6: writeSector(bx,cx); break;
-      // case 7: deleteFile(bx); break;
-      // case 8: writeFile(bx,cx,dx); break;
+      case 7: deleteFile(bx); break;
+      case 8: writeFile(bx,cx,dx); break;
       case 12: clearScreen(bx,cx); break;
       case 13: printInt(bx,cx); break;
       case 14: readInt(bx); break;
@@ -75,6 +84,7 @@ void error(int bx){
       case 0: printString("File not found.\r\n\0", 0); break;
       case 1: printString("Bad file name.\r\n\0", 0); break;
       case 2: printString("Disk full.\r\n\0", 0); break;
+      case 3: printString("Debugging Breakpoint hit.\r\n\0", 0); break;
       default: printString("General Error.\r\n\0", 0);
    }  
    while (1) ;
@@ -116,21 +126,34 @@ void writeSector(char* buffer, int absSecNo) {
    interrupt(19, 769, buffer, CX, DX);
 }
 
+int findEmptySector(char* map) {
+   int counter = 0;
+   for (counter; counter < 512; counter = counter + 32) {
+      if (map[counter] == 0) {
+         return counter;
+      }
+   }
+   return 600;
+}
+
 void readFile(char* fname, char* buffer, int* size) {
    char fileDir[512];
    char tempBuffer[512];
    int counter = 0;
    int sectorCounter = 0;
 
+   *size = 0;
+
    readSector(fileDir, 257); 
 
    for (counter; counter < 512; counter = counter + 32) {
       if (strCmp(fname, fileDir + counter) == 0){
          counter = counter + 8;
-         for (sectorCounter; sectorCounter < 10; sectorCounter = sectorCounter + 1){
+         for (sectorCounter; sectorCounter < 24; sectorCounter = sectorCounter + 1){
             readSector(tempBuffer, fileDir[counter + sectorCounter]);
 
-            strncpy(buffer + (512*sectorCounter), tempBuffer, 512);
+            strnCpy(buffer + (512*sectorCounter), tempBuffer, 512);
+            *size = *size + 1;
 
             // printString(buffer, 0);
             // buffer = buffer + 512;
@@ -142,11 +165,108 @@ void readFile(char* fname, char* buffer, int* size) {
    return;
 }
 
+void writeFile(char* name, char* buffer, int numberOfSectors) {
+   char fileDir[512];
+   char map[512];
+   char filenameHolder[6];
+   char emptyBuffer[512];
+   char tempBuffer[512];
+   int counter = 0;
+
+   int diridx = 600;
+   int diridxCounter;
+
+   int tempidx = 600; 
+
+   readSector(map, 256); 
+   readSector(fileDir, 257); 
+
+   for (counter; counter < 512; counter = counter + 32) {
+      if (strCmp(name, fileDir + counter) == 0){
+         error(1);
+         return;
+      }
+   }
+
+   diridx = findEmptySector(map);
+
+   if (diridx == 600) {
+      error(2);
+      return;
+   }
+
+   //this should take care of the padding
+   strnCpy(filenameHolder, name, 6);
+   //insert name
+   map[diridx] = 255;
+   strnCpy(fileDir + diridx, filenameHolder, 6);
+   diridxCounter = diridx + 8;
+
+   counter = 0;
+   for (counter; counter < numberOfSectors; counter++) {
+      strnCpy(tempBuffer, emptyBuffer, 512);
+      
+      tempidx = findEmptySector(map);
+
+      if (tempidx == 600) {
+         error(2);
+         return;
+      }
+
+      map[counter] = 255;
+      fileDir[diridxCounter] = counter;
+
+      //write sector will get the length right
+      strnCpy(tempBuffer, buffer + (counter * 512), 512);
+      writeSector(tempBuffer, counter);
+
+      tempidx = 600;
+   }
+
+   for (diridxCounter; diridxCounter < diridx + 32; diridxCounter++ ){
+      fileDir[diridxCounter] = 0;
+   } 
+
+   writeSector(map, 256);
+   writeSector(fileDir, 257);
+}
+
+void deleteFile(char* name){
+   char fileDir[512];
+   char map[512];
+   int counter = 0;
+   int endDirSector;
+
+   readSector(map, 256); 
+   readSector(fileDir, 257); 
+
+   for (counter; counter < 512; counter = counter + 32) {
+      if (strCmp(name, fileDir + counter) == 0){
+         error(1);
+         return;
+      }
+   }
+
+   fileDir[counter] = 0;
+   map[counter] = 0;
+   endDirSector = counter + 32;
+   counter = counter + 8;
+
+   for (counter; counter < endDirSector; counter++){
+      map[fileDir[counter]] = 0;
+   }
+
+   writeSector(map, 256);
+   writeSector(fileDir, 257);
+}
+
 void printString(char* c, int d)
 {
+   char temp;
    if (d == 1) {
       while(*c != '\0'){ 
-         interrupt(23, *c, 0, 0, 0);
+         temp = *c;
+         interrupt(23, temp, 0, 0, 0);
          c++;
       }
       return;
@@ -314,7 +434,8 @@ void playMadLibs(){
    interrupt(33,0,"Sam Borick\r\n\0",1,0);
 }
 
-char strncpy(char *dst, char *src, int n) {
+
+char strnCpy(char *dst, char *src, int n) {
    int i;
    char *temp;
    temp = dst;  
