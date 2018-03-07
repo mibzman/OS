@@ -261,7 +261,7 @@ void writeFile(char * name, char * buffer, int numberOfSectors) {
 void deleteFile(char * name) {
   char map[512], disk[512];
   char * current;
-  int found = 0
+  int found = 0;
   int i;
 
   readSector(map, 256);
