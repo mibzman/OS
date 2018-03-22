@@ -19,6 +19,8 @@ void printString(char * , int);
 void printChar(char * );
 void printInt(int, int);
 
+void runProgram(char*, int);
+
 void readString(char[80]);
 void readInt(int * );
 
@@ -36,32 +38,15 @@ int mod(int a, int b);
 int div(int a, int b);
 
 void main() {
-  char buffer[12288];
-  int size;
-  char buffer2[12288];
+  char buffer[512];
   makeInterrupt21();
-
-  /* Step 0 – config file */
-  interrupt(33, 2, buffer, 258, 0);
-  interrupt(33, 12, buffer[0] + 1, buffer[1] + 1, 0);
+  interrupt(33,2,buffer,258,0);
+  interrupt(33,12,buffer[0]+1,buffer[1]+1,0);
+  printString("being a cunt", 1);
   printLogo();
-
-  /* Step 1 – load/edit/print file */
-  interrupt(33, 3, "spc02\0", buffer2, & size);
-  buffer2[7] = '2';
-  buffer2[8] = '0';
-  buffer2[9] = '1';
-  buffer2[10] = '8';
-  // printString("printing first time\r\n\0",0);
-  // interrupt(33,0,"printing first time\r\n\0",0,0);
-  interrupt(33, 0, buffer2, 0, 0);
-
-  /* Step 2 – write revised file */
-  interrupt(33, 8, "spr18\0", buffer, size);
-  /* Step 3 – delete original file */
-  interrupt(33, 7, "spc02\0", 0, 0);
-
-  while (1);
+  interrupt(33,4,"kitty1\0",2,0);
+  interrupt(33,0,"Error if this executes.\r\n\0",0,0);
+  while (1) ;
 }
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
@@ -78,6 +63,12 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   case 3:
     readFile(bx, cx, dx);
     break;
+  case 4:
+    runProgram(bx, cx);
+    break;
+  // case 5:
+  //   stop()
+  //   break;
   case 6:
     writeSector(bx, cx);
     break;
@@ -295,6 +286,22 @@ void deleteFile(char * name) {
   writeSector(disk, 257);
 }
 
+void runProgram(char* name, int segment) {
+  char buffer[12288];
+  int temp = 0;
+
+  printString("reading file", 0);
+  readFile(name, buffer);
+  segment *= 4096;
+
+  for (temp; temp < 12288; temp++) {
+    putInMemory(segment, temp, buffer[temp]);
+  }
+
+  printString("launching program", 0);
+  launchProgram(segment);
+}
+
 void printString(char * c, int d) {
   char temp;
   if (d == 1) {
@@ -305,6 +312,7 @@ void printString(char * c, int d) {
     }
     return;
   }
+  //screen
   while ( * c != '\0') {
     printChar(c);
     c++;
@@ -402,6 +410,7 @@ void readInt(int * output) {
 
   result = result * sign; * output = result;
 }
+
 
 void clearScreen(int bx, int cx) {
   int val = 4096 * (bx - 1) + 256 * (cx - 1);
