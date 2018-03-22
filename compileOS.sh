@@ -23,7 +23,8 @@ dd if=kernel of=floppya.img bs=512 conv=notrunc seek=259
 dd if=msg of=floppya.img bs=512 count=1 seek=30 conv=notrunc
 
 # ./loadFile spc02
-./loadFile kitty1
+# ./loadFile kitty1
+./loadFile kitty2
 
 bochs -f osxterm.txt
 

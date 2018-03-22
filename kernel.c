@@ -20,6 +20,7 @@ void printChar(char * );
 void printInt(int, int);
 
 void runProgram(char*, int);
+void stop();
 
 void readString(char[80]);
 void readInt(int * );
@@ -45,7 +46,7 @@ void main() {
   printString("being a cunt", 1);
   printLogo();
   interrupt(33,4,"kitty1\0",2,0);
-  interrupt(33,0,"Error if this executes.\r\n\0",0,0);
+  interrupt(33,0,"Program exited.\r\n\0",0,0);
   while (1) ;
 }
 
@@ -66,9 +67,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   case 4:
     runProgram(bx, cx);
     break;
-  // case 5:
-  //   stop()
-  //   break;
+  case 5:
+    stop();
+    break;
   case 6:
     writeSector(bx, cx);
     break;
@@ -300,6 +301,10 @@ void runProgram(char* name, int segment) {
 
   printString("launching program", 0);
   launchProgram(segment);
+}
+
+void stop() { 
+  while (1); 
 }
 
 void printString(char * c, int d) {
