@@ -7,20 +7,27 @@
 2. Print strings or integers
 3. Read data from the floppy device
 4. Write data to the floppy device
+5. Read files
+6. Write files
+7. Delete files
 
-Currently on startup the OS sets a color scheme (currently l33t HAXOR), then reads an ASCII image of a cat from the disk to the screen, and writes a simple config file onto the floppy.
+#### Currently on startup the OS:
+
+1. sets a color scheme (currently l33t HAXOR) from the config file on the floppy
+2. reads a calander off the disk
+3. changes the date
+4. saves it to the disk as a new file
+5. deletes the old one
 
 This can be tested by running compileOS.sh.  The result should run in the boch emulator.
 
-run `hexdump –C floppy.img > dump` to dump the floppy
+then run `hexdump –C floppy.img > dump` to dump the floppy to a dump file
 
 ### Notes:
 
 - (Resolved?) Currently the OS has been observed to crash on startup. This occurs sporadically, and when run again (rarely after as many as 3 attempts) the machine boots as expected. The cause of this is currently unknown.
 
 - compileOS.sh attempts to copy the contents of the config after bochs exits, however this command will not be run if force exited.
-
-
 
 
 
