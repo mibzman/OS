@@ -9,3 +9,7 @@ kernel
 printer.out
 loadFile
 a.out
+
+bdos_asm.o
+fib
+fib.o
