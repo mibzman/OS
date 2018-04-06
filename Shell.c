@@ -1,4 +1,8 @@
+#define Print(x)     interrupt(33,0,x,0,0)
+#define Read(x,y)    interrupt(33,2,x,y,0)
+
 int strCmp(char*, char*, int);
+void dir();
 
 void main(){
 	char input[600];
@@ -15,6 +19,10 @@ void main(){
 	{
 		interrupt(33,12,5,16,0);
 	}
+	else if(strCmp(input, "dir", 3))
+	{
+		dir();
+	}
 	else if(strCmp(input, "echo", 4))
 	{
 		interrupt(33, 0, "\r\n\0", 0, 0);
@@ -28,11 +36,6 @@ void main(){
 	else {
 		interrupt(33, 0, "\r\nbad command or file name\r\n\0", 0, 0);
 	}
-
-	// interrupt(33, 0, "\r\nYou entered: \0", 0, 0);
-	// interrupt(33, 0, input, 0, 0);
-	// interrupt(33, 0, "\r\n\0", 0, 0);
-
 } 
 
 
@@ -48,3 +51,51 @@ int strCmp(char* a, char* b, int length)
 	}
 	return 1;
 }
+
+void dir()
+{
+   char buffer[512];
+   char fname[512];
+   int index = 0;
+   int i;
+   int runs = 0;
+   int size = 0;
+   int total = 0;
+
+   Read(buffer, 257);
+   Print("\r\n\0");
+   while(buffer[index] != 0x0)
+   {
+      for (i = 0; i < 6; ++i)
+      {
+         fname[i] = buffer[index + i];
+      }
+      for (i = 6; i<32; ++i)
+      {
+         if (buffer[index + i] == 0x0)
+         {
+            break;
+         }
+         else
+         {
+            ++size;
+         }
+      }
+      total = total + size;
+      if(fname[0] >= 'A' && fname[0] <= 'Z')
+      {
+      }
+      else
+      {
+         // Print("File name: \0");
+         Print(fname);
+         // Print("        File size: \0");
+         // PRINTN(size);
+         Print(" \0");
+      }
+      size = 0;
+      runs = runs + 6;
+      index = index + 32;
+   }
+   Print("\r\n\0");
+} 
