@@ -10,25 +10,22 @@
 5. Read files
 6. Write files
 7. Delete files
+8. Run programs
 
 #### Currently on startup the OS:
 
 1. sets a color scheme (currently l33t HAXOR) from the config file on the floppy
-2. reads a calander off the disk
-3. changes the date
-4. saves it to the disk as a new file
-5. deletes the old one
+3. Loads a test program (fib.c)
+4. Runs the program
+	The programs asks for a number input and then prints that number of fibonacci numbers
 
 This can be tested by running compileOS.sh.  The result should run in the boch emulator.
-
-then run `hexdump –C floppy.img > dump` to dump the floppy to a dump file
 
 ### Notes:
 
 - (Resolved?) Currently the OS has been observed to crash on startup. This occurs sporadically, and when run again (rarely after as many as 3 attempts) the machine boots as expected. The cause of this is currently unknown.
 
 - compileOS.sh attempts to copy the contents of the config after bochs exits, however this command will not be run if force exited.
-
 
 
 ## ACADEMIC INTEGRITY PLEDGE 
@@ -40,7 +37,6 @@ then run `hexdump –C floppy.img > dump` to dump the floppy to a dump file
                                                                        
 I have violated neither the spirit nor letter of these restrictions.
 
-:_Sam Borick___ Date:_02/08/18____
+:_Sam Borick___ Date:_02/08/18___
 
-
-3460:4/526 BlackDOS2020 kernel, Version 1.01, Spring 2018.
+3460:4/526 BlackDOS2020 kernel, Version 1.5, Spring 2018.
