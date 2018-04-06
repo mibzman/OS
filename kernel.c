@@ -43,10 +43,9 @@ void main() {
   makeInterrupt21();
   interrupt(33,2,buffer,258,0);
   interrupt(33,12,buffer[0]+1,buffer[1]+1,0);
-  printString("being a cunt", 1);
   printLogo();
-  interrupt(33,4,"kitty1\0",2,0);
-  interrupt(33,0,"Program exited.\r\n\0",0,0);
+  interrupt(33,4,"Shell\0",2,0);
+  interrupt(33,0,"Bad or missing command interpreter.\r\n\0",0,0);
   while (1) ;
 }
 
@@ -77,6 +76,8 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   case 8:
     writeFile(bx, cx, dx);
     break;
+  case 11:
+    interrupt(25,0,0,0,0);
   case 12:
     clearScreen(bx, cx);
     break;
@@ -304,7 +305,7 @@ void runProgram(char* name, int segment) {
 }
 
 void stop() { 
-  while (1); 
+  launchProgram(8192);
 }
 
 void printString(char * c, int d) {
