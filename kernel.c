@@ -1,42 +1,7 @@
 ﻿// for academic integrity agreement, see README.md         
 
 void handleInterrupt21(int, int, int, int);
-
-void error(int);
-
-//disk
-void readSector(char * , int);
-void writeSector(char * , int);
-int findEmptySector(char * );
-
-//file
-void readFile(char * , char * , int * );
-void writeFile(char * , char * , int);
-void deleteFile(char * );
-
-//screen management
-void printString(char * , int);
-void printChar(char * );
-void printInt(int, int);
-
-void runProgram(char*, int);
-void stop();
-
-void readString(char[80]);
-void readInt(int * );
-
-void clearScreen(char * , char * );
 void printLogo();
-
-//games
-void playMadLibs();
-
-//util
-char strnCpy(char,
-  const char, int);
-int strCmp(char, char);
-int mod(int a, int b);
-int div(int a, int b);
 
 void main() {
   char buffer[512];
@@ -44,56 +9,159 @@ void main() {
   interrupt(33,2,buffer,258,0);
   interrupt(33,12,buffer[0]+1,buffer[1]+1,0);
   printLogo();
+  // deleteFile("spc02");
   interrupt(33,4,"Shell\0",2,0);
   interrupt(33,0,"Bad or missing command interpreter.\r\n\0",0,0);
   while (1) ;
 }
 
-void handleInterrupt21(int ax, int bx, int cx, int dx) {
-  switch (ax) {
-  case 0:
-    printString(bx, cx);
-    break;
-  case 1:
-    readString(bx);
-    break;
-  case 2:
-    readSector(bx, cx);
-    break;
-  case 3:
-    readFile(bx, cx, dx);
-    break;
-  case 4:
-    runProgram(bx, cx);
-    break;
-  case 5:
-    stop();
-    break;
-  case 6:
-    writeSector(bx, cx);
-    break;
-    // case 7: deleteFile(bx); break;
-  case 8:
-    writeFile(bx, cx, dx);
-    break;
-  case 11:
-    interrupt(25,0,0,0,0);
-  case 12:
-    clearScreen(bx, cx);
-    break;
-  case 13:
-    printInt(bx, cx);
-    break;
-  case 14:
-    readInt(bx);
-    break;
-  case 15:
-    error(bx);
-    break;
-  default:
-    printString("General BlackDOS error.\r\n\0", 0);
+void printChar(char * c) {
+  char al = * c;
+  char ah = 14;
+  int ax = ah * 256 + al;
+  interrupt(16, ax, 0, 0, 0);
+  return;
+}
+
+void printString(char * c, int d) {
+  char temp;
+  if (d == 1) {
+    while ( * c != '\0') {
+      temp = * c;
+      interrupt(23, temp, 0, 0, 0);
+      c++;
+    }
+    return;
+  }
+  //screen
+  while ( * c != '\0') {
+    printChar(c);
+    c++;
   }
   return;
+}
+
+void readString(char line[80]) {
+  int counter = 0;
+  char * charHolder;
+  char * realCharPointer;
+  char realChar;
+  do {
+    //doesn't return a char pointer pointing to a space in memory that contains the ASCII value (i.e. a char), 
+    //it just returns the ASCII value typed incorrectly 
+    charHolder = interrupt(22, 0, 0, 0, 0);
+    realCharPointer = & charHolder;
+    realChar = * realCharPointer;
+    // Note that we pass a pointer to charHolder (a pointer pointer), 
+    //which is then dereferenced and read as a char.
+
+    if (realChar == '\0') {
+      continue;
+    } else if (realChar == '\r') {
+      line[counter] = '\0';
+      counter++;
+    } else if (realChar == '\b') {
+      counter--;
+    } else {
+      line[counter] = realChar;
+      counter++;
+    }
+
+    printChar( & charHolder);
+
+  } while (realChar != '\r');
+  printString("\n\0", 0);
+}
+
+void clearScreen(int bx, int cx) {
+  int val = 4096 * (bx - 1) + 256 * (cx - 1);
+  printString("\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\0");
+  interrupt(16, 512, 0, 0, 0);
+  if (bx > 0 && cx > 0) {
+    interrupt(16, 1536, val, 0, 6223);
+  }
+
+}
+
+int mod(int a, int b) {
+  int x = a;
+  while (x >= b) x = x - b;
+  return x;
+}
+
+int div(int a, int b) {
+  int q = 0;
+  while (q * b <= a) q++;
+  return (q - 1);
+}
+
+void printInt(int input, int mode) {
+  char result[80];
+  int counter = 0;
+  int temp;
+
+  if (input == 0) {
+    printChar('0');
+    return;
+  }
+
+  if (input < 0) {
+    result[0] = '-';
+    input = input * -1;
+    counter++;
+  }
+
+  //fill our array with null terminators so we don't have to do it later
+  for (temp = input; temp > 0; temp = div(temp, 10), counter++) {
+    result[counter] = '\0';
+  }
+  result[counter] = '\0';
+  result[counter + 1] = '\0';
+  //now our counter is at the 'end' of our string
+
+  for (temp = input; temp > 0; temp = div(temp, 10)) {
+    result[--counter] = mod(temp, 10) + '0';
+  }
+
+  printString(result, mode);
+}
+
+void readInt(int * output) {
+  char input[80];
+  int sign = 1;
+  int counter = -1;
+  int result = 0;
+
+  readString(input);
+
+  if (input[0] == '-') {
+    sign = -1;
+    counter = 0;
+  }
+
+  while (input[++counter] != '\0') { //iterate until the array end
+    result = result * 10 + (input[counter] - '0'); //generating the integer according to read parsed numbers.
+  }
+
+  result = result * sign; * output = result;
+}
+
+
+void readSector(char* buffer, int sector)
+{
+   int ah = 2, /* tells the BIOS to read a sector */
+   al = 1, /* number of sectors to read */
+   ch = div(sector,36), /* track number, trackNo */
+   cl = mod(sector,18) + 1, /* relative sector number, relSecNo */
+   dh = mod(div(sector,18),2), /* head number, headNo */
+   dl = 0, /* device number for the floppy disk */
+
+   ax = ah * 256 + al,
+   cx = ch * 256 + cl,
+   dx = dh * 256 + dl;
+   
+   interrupt(0x13, ax, buffer, cx, dx);
+   return;
 }
 
 void error(int bx) {
@@ -116,50 +184,17 @@ void error(int bx) {
   while (1);
 }
 
-void readSector(char * buffer, int absSecNo) {
-  int CX;
-  int DX;
+int strCmp(char a[], char b[]) {
+  int i = 0;
+  for (i;; i++) {
+    if (a[i] != b[i]) {
+      return a[i] < b[i] ? -1 : 1;
+    }
 
-  int trackNo;
-  int relSecNo;
-  int headNo;
-
-  relSecNo = mod(absSecNo, 18) + 1;
-  headNo = mod(div(absSecNo, 18), 2);
-  trackNo = div(absSecNo, 36);
-
-  CX = trackNo * 256 + relSecNo;
-  DX = headNo * 256;
-
-  interrupt(19, 513, buffer, CX, DX);
-}
-
-void writeSector(char * buffer, int absSecNo) {
-  int CX;
-  int DX;
-
-  int trackNo;
-  int relSecNo;
-  int headNo;
-
-  relSecNo = mod(absSecNo, 18) + 1;
-  headNo = mod(div(absSecNo, 18), 2);
-  trackNo = div(absSecNo, 36);
-
-  CX = trackNo * 256 + relSecNo;
-  DX = headNo * 256;
-
-  interrupt(19, 769, buffer, CX, DX);
-}
-
-int findEmptySector(char * map) {
-  int counter = 0;
-  for (counter; counter < 512; counter = counter + 32) {
-    if (map[counter] == 0) {
-      return counter;
+    if (a[i] == '\0') {
+      return 0;
     }
   }
-  return 600;
 }
 
 void readFile(char * fname, char * buffer, int * size) {
@@ -185,6 +220,88 @@ void readFile(char * fname, char * buffer, int * size) {
 
   error(0);
   return;
+}
+
+void runProgram(char* name, int segment) {
+  char buffer[12288];
+  int temp = 0;
+
+  printString("reading file\r\n", 0);
+  readFile(name, buffer);
+  segment *= 4096;
+
+  for (temp; temp < 12288; temp++) {
+    putInMemory(segment, temp, buffer[temp]);
+  }
+
+  printString("launching program\r\n", 0);
+  launchProgram(segment);
+}
+
+void stop() { 
+  launchProgram(8192);
+}
+
+void writeSector(char * buffer, int absSecNo) {
+  int CX;
+  int DX;
+
+  int trackNo;
+  int relSecNo;
+  int headNo;
+
+  relSecNo = mod(absSecNo, 18) + 1;
+  headNo = mod(div(absSecNo, 18), 2);
+  trackNo = div(absSecNo, 36);
+
+  CX = trackNo * 256 + relSecNo;
+  DX = headNo * 256;
+
+  interrupt(19, 769, buffer, CX, DX);
+}
+
+void deleteFile(char * name) {
+  char map[512], disk[512];
+  char *current;
+  int found = 0;
+  int i;
+
+  // readSector(map, 256);
+  // readSector(disk, 257);
+
+  // interrupt(33, 0, name, 0, 0);
+  // interrupt(33, 0, "\r\n\0", 0, 0);
+
+  // current = disk;
+  // printLogo();
+  // // interrupt(33, 0, "deleting \r\n\0", 0, 0);
+
+  // for (i = 0; i < 16; i++) {
+  //   // interrupt(33, 0, "looping \r\n\0", 0, 0);
+  //   if (strCmp(name, current)) {
+  //     // interrupt(33, 0, "looping2 \r\n\0", 0, 0);
+  //     found = 1;
+
+  //     *current = 0x0;
+  //     current += 8;
+
+  //     while (*current != 0x0) {
+  //       map[*current] = 0x0;
+  //       current++;
+  //       // interrupt(33, 0, "zeroing \r\n\0", 0, 0);
+  //     }
+  //   }
+
+  //   current += 32;
+  // }
+
+  // if (!found) {
+  //   error(0);
+  //   return;
+  // }
+
+  // writeSector(map, 256);
+  // writeSector(disk, 257);
 }
 
 void writeFile(char * name, char * buffer, int numberOfSectors) {
@@ -251,192 +368,38 @@ void writeFile(char * name, char * buffer, int numberOfSectors) {
   return;
 }
 
-void deleteFile(char * name) {
-  char map[512], disk[512];
-  char * current;
-  int found = 0;
-  int i;
-
-  readSector(map, 256);
-  readSector(disk, 257);
-
-  current = disk;
-
-
-  for (i = 0; i < 16; i++) {
-    if (strCmp(name, current)) {
-      found = 1;
-
-      * current = 0x0;
-      current += 8;
-
-      while ( * current != 0x0) {
-        map[ * current] = 0x0;
-        current++;
-      }
-    }
-
-    current += 32;
-  }
-
-  if (!found) {
-    error(0);
-    return;
-  }
-
-  writeSector(map, 256);
-  writeSector(disk, 257);
-}
-
-void runProgram(char* name, int segment) {
-  char buffer[12288];
-  int temp = 0;
-
-  printString("reading file", 0);
-  readFile(name, buffer);
-  segment *= 4096;
-
-  for (temp; temp < 12288; temp++) {
-    putInMemory(segment, temp, buffer[temp]);
-  }
-
-  printString("launching program", 0);
-  launchProgram(segment);
-}
-
-void stop() { 
-  launchProgram(8192);
-}
-
-void printString(char * c, int d) {
-  char temp;
-  if (d == 1) {
-    while ( * c != '\0') {
-      temp = * c;
-      interrupt(23, temp, 0, 0, 0);
-      c++;
-    }
-    return;
-  }
-  //screen
-  while ( * c != '\0') {
-    printChar(c);
-    c++;
+void handleInterrupt21(int ax, int bx, int cx, int dx) {
+  switch (ax) {
+  case 0: printString(bx, cx); break;
+  case 1: readString(bx); break;
+  case 2: readSector(bx, cx); break;
+  case 3: readFile(bx, cx, dx); break;
+  case 4: runProgram(bx, cx); break;
+  case 5: stop(); break;
+  case 6: writeSector(bx, cx); break;
+  case 7: deleteFile(bx);  break;
+  case 8: writeFile(bx, cx, dx); break;
+  case 11: interrupt(25,0,0,0,0); 
+  case 12: clearScreen(bx, cx); break;
+  case 13: printInt(bx, cx); break;
+  case 14: readInt(bx); break;
+  case 15: error(bx); break;
+  default:
+    printString("General BlackDOS error.\r\n\0", 0);
   }
   return;
 }
 
-void printChar(char * c) {
-  char al = * c;
-  char ah = 14;
-  int ax = ah * 256 + al;
-  interrupt(16, ax, 0, 0, 0);
-  return;
-}
 
-void printInt(int input, int mode) {
-  char result[80];
+
+int findEmptySector(char * map) {
   int counter = 0;
-  int temp;
-
-  if (input == 0) {
-    printChar('0');
-    return;
-  }
-
-  if (input < 0) {
-    result[0] = '-';
-    input = input * -1;
-    counter++;
-  }
-
-  //fill our array with null terminators so we don't have to do it later
-  for (temp = input; temp > 0; temp = div(temp, 10), counter++) {
-    result[counter] = '\0';
-  }
-  result[counter] = '\0';
-  result[counter + 1] = '\0';
-  //now our counter is at the 'end' of our string
-
-  for (temp = input; temp > 0; temp = div(temp, 10)) {
-    result[--counter] = mod(temp, 10) + '0';
-  }
-
-  printString(result, mode);
-}
-
-void readString(char line[80]) {
-  int counter = 0;
-  char * charHolder;
-  char * realCharPointer;
-  char realChar;
-  do {
-    //doesn't return a char pointer pointing to a space in memory that contains the ASCII value (i.e. a char), 
-    //it just returns the ASCII value typed incorrectly 
-    charHolder = interrupt(22, 0, 0, 0, 0);
-    realCharPointer = & charHolder;
-    realChar = * realCharPointer;
-    // Note that we pass a pointer to charHolder (a pointer pointer), 
-    //which is then dereferenced and read as a char.
-
-    if (realChar == '\0') {
-      continue;
-    } else if (realChar == '\r') {
-      line[counter] = '\0';
-      counter++;
-    } else if (realChar == '\b') {
-      counter--;
-    } else {
-      line[counter] = realChar;
-      counter++;
+  for (counter; counter < 512; counter = counter + 32) {
+    if (map[counter] == 0) {
+      return counter;
     }
-
-    printChar( & charHolder);
-
-  } while (realChar != '\r');
-  printString("\n\0", 0);
-}
-
-void readInt(int * output) {
-  char input[80];
-  int sign = 1;
-  int counter = -1;
-  int result = 0;
-
-  readString(input);
-
-  if (input[0] == '-') {
-    sign = -1;
-    counter = 0;
   }
-
-  while (input[++counter] != '\0') { //iterate until the array end
-    result = result * 10 + (input[counter] - '0'); //generating the integer according to read parsed numbers.
-  }
-
-  result = result * sign; * output = result;
-}
-
-
-void clearScreen(int bx, int cx) {
-  int val = 4096 * (bx - 1) + 256 * (cx - 1);
-  printString("\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\0");
-  interrupt(16, 512, 0, 0, 0);
-  if (bx > 0 && cx > 0) {
-    interrupt(16, 1536, val, 0, 6223);
-  }
-
-}
-
-void printLogo() {
-  printString("       ___   `._   ____  _            _    _____   ____   _____ \r\n\0", 0);
-  printString("      /   \\__/__> |  _ \\| |          | |  |  __ \\ / __ \\ / ____|\r\n\0", 0);
-  printString("     /_  \\  _/    | |_) | | __ _  ___| | _| |  | | |  | | (___ \r\n\0", 0);
-  printString("    // \\ /./      |  _ <| |/ _` |/ __| |/ / |  | | |  | |\\___ \\ \r\n\0", 0);
-  printString("   //   \\\\        | |_) | | (_| | (__|   <| |__| | |__| |____) |\r\n\0", 0);
-  printString("._/'     `\\.      |____/|_|\\__,_|\\___|_|\\_\\_____/ \\____/|_____/\r\n\0", 0);
-  printString(" BlackNOS2020 v. 1.01, c. 2018. Based on a project by M. Black. \r\n\0", 0);
-  printString(" Author: Sam Borick.\r\n\r\n\0", 0);
+  return 600;
 }
 
 void playMadLibs() {
@@ -488,27 +451,13 @@ char strnCpy(char * dst, char * src, int n) {
   return temp;
 }
 
-int strCmp(char a[], char b[]) {
-  int i = 0;
-  for (i;; i++) {
-    if (a[i] != b[i]) {
-      return a[i] < b[i] ? -1 : 1;
-    }
-
-    if (a[i] == '\0') {
-      return 0;
-    }
-  }
-}
-
-int mod(int a, int b) {
-  int x = a;
-  while (x >= b) x = x - b;
-  return x;
-}
-
-int div(int a, int b) {
-  int q = 0;
-  while (q * b <= a) q++;
-  return (q - 1);
+void printLogo() {
+  printString("       ___   `._   ____  _            _    _____   ____   _____ \r\n\0", 0);
+  printString("      /   \\__/__> |  _ \\| |          | |  |  __ \\ / __ \\ / ____|\r\n\0", 0);
+  printString("     /_  \\  _/    | |_) | | __ _  ___| | _| |  | | |  | | (___ \r\n\0", 0);
+  printString("    // \\ /./      |  _ <| |/ _` |/ __| |/ / |  | | |  | |\\___ \\ \r\n\0", 0);
+  printString("   //   \\\\        | |_) | | (_| | (__|   <| |__| | |__| |____) |\r\n\0", 0);
+  printString("._/'     `\\.      |____/|_|\\__,_|\\___|_|\\_\\_____/ \\____/|_____/\r\n\0", 0);
+  printString(" BlackNOS2020 v. 1.01, c. 2018. Based on a project by M. Black. \r\n\0", 0);
+  printString(" Author: Sam Borick.\r\n\r\n\0", 0);
 }
