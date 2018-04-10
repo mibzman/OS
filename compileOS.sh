@@ -34,9 +34,9 @@ as86 blackdos.asm -o Shell_asm.o
 ld86 -o Shell -d Shell.o Shell_asm.o
 
 ./loadFile Shell
-./loadFile spc02
-./loadFile kitty1
-./loadFile kitty2
+# ./loadFile spc02
+# ./loadFile kitty1
+# ./loadFile kitty2
 
 bochs -f osxterm.txt
 

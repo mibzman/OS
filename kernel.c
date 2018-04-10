@@ -1,4 +1,5 @@
 ﻿// for academic integrity agreement, see README.md
+#include "blackdos.h"
 
 void handleInterrupt21(int, int, int, int);
 void printLogo();
@@ -267,40 +268,40 @@ void deleteFile(char * name) {
   int found = 0;
   int i;
 
-  // readSector(map, 256);
-  // readSector(disk, 257);
+  PRINTS("deleting from kernel\r\n\0");
 
+  readSector(map, 256);
+  readSector(disk, 257);
+  //
   // interrupt(33, 0, name, 0, 0);
   // interrupt(33, 0, "\r\n\0", 0, 0);
-
+  //
   // current = disk;
-  // printLogo();
-  // // interrupt(33, 0, "deleting \r\n\0", 0, 0);
-
+  //
   // for (i = 0; i < 16; i++) {
   //   // interrupt(33, 0, "looping \r\n\0", 0, 0);
   //   if (strCmp(name, current)) {
   //     // interrupt(33, 0, "looping2 \r\n\0", 0, 0);
   //     found = 1;
-
+  //
   //     *current = 0x0;
   //     current += 8;
-
+  //
   //     while (*current != 0x0) {
   //       map[*current] = 0x0;
   //       current++;
   //       // interrupt(33, 0, "zeroing \r\n\0", 0, 0);
   //     }
   //   }
-
+  //
   //   current += 32;
   // }
-
+  //
   // if (!found) {
   //   error(0);
   //   return;
   // }
-
+  //
   // writeSector(map, 256);
   // writeSector(disk, 257);
 }

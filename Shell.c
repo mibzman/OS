@@ -39,7 +39,7 @@ void main(){
 		if (isCapital(input[4]))
 		{
 			// interrupt(33, 15, 1, 0, 0);
-			Print("cannot delete, protected\r\n\0");		
+			Print("cannot delete, protected\r\n\0");
 			return;
 		}
 		interrupt(33, 7, input + 4, 0, 0);
@@ -71,7 +71,7 @@ void main(){
 	    }
 	    arg1[6] = '\0';
 	    arg2[6] = '\0';
-       
+
        Print("arg1");
        Print(arg1);
        Print("arg2");
@@ -103,7 +103,7 @@ void main(){
 		}
 		Print("Enter your tweet: \0");
 		interrupt(33,1,tweet,0,0);
-		interrupt(33, 0, input + 6, tweet, 1);
+		interrupt(33,8, input + 6, tweet, 1);
 		Print("\r\n\0");
 	}
 	else if (strCmp(input, "setenv fg", 9))
@@ -129,7 +129,7 @@ void main(){
 	else {
 		interrupt(33, 0, "\r\nbad command or file name\r\n\0", 0, 0);
 	}
-} 
+}
 
 
 int strCmp(char* a, char* b, int length)
@@ -188,7 +188,7 @@ void dir()
       index = index + 32;
    }
    Print("\r\n\0");
-} 
+}
 
 int isCapital(char* ch)
 {
