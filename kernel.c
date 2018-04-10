@@ -1,7 +1,8 @@
-﻿// for academic integrity agreement, see README.md         
+﻿// for academic integrity agreement, see README.md
 
 void handleInterrupt21(int, int, int, int);
 void printLogo();
+char strnCpy(char, char, int);
 
 void main() {
   char buffer[512];
@@ -47,12 +48,12 @@ void readString(char line[80]) {
   char * realCharPointer;
   char realChar;
   do {
-    //doesn't return a char pointer pointing to a space in memory that contains the ASCII value (i.e. a char), 
-    //it just returns the ASCII value typed incorrectly 
+    //doesn't return a char pointer pointing to a space in memory that contains the ASCII value (i.e. a char),
+    //it just returns the ASCII value typed incorrectly
     charHolder = interrupt(22, 0, 0, 0, 0);
     realCharPointer = & charHolder;
     realChar = * realCharPointer;
-    // Note that we pass a pointer to charHolder (a pointer pointer), 
+    // Note that we pass a pointer to charHolder (a pointer pointer),
     //which is then dereferenced and read as a char.
 
     if (realChar == '\0') {
@@ -159,7 +160,7 @@ void readSector(char* buffer, int sector)
    ax = ah * 256 + al,
    cx = ch * 256 + cl,
    dx = dh * 256 + dl;
-   
+
    interrupt(0x13, ax, buffer, cx, dx);
    return;
 }
@@ -181,7 +182,7 @@ void error(int bx) {
   default:
     printString("General Error.\r\n\0", 0);
   }
-  while (1);
+  // while (1);
 }
 
 int strCmp(char a[], char b[]) {
@@ -238,7 +239,7 @@ void runProgram(char* name, int segment) {
   launchProgram(segment);
 }
 
-void stop() { 
+void stop() {
   launchProgram(8192);
 }
 
@@ -304,69 +305,72 @@ void deleteFile(char * name) {
   // writeSector(disk, 257);
 }
 
-void writeFile(char * name, char * buffer, int numberOfSectors) {
-  char map[512], disk[512];
-  int freeDir = 0;
-  int freeSector = 0;
-  int diskByte = 0;
-  int i = 0;
-  int y = 8;
+void writeFile(char* name, char* buffer, int numberOfSectors) {
+   char fileDir[512];
+   char map[512];
+   char filenameHolder[6];
+   char emptyBuffer[512];
+   char tempBuffer[512];
+   int counter = 0;
 
-  readSector(map, 256);
-  readSector(disk, 257);
+   int diridx = 600;
+   int diridxCounter;
 
-  while (diskByte < 512) {
-    if (disk[diskByte] != 0x0 && strCmp(name, & disk[diskByte])) {
-      error(1);
-      return;
-    }
+   int tempidx = 600;
 
-    if (freeDir == 0 && disk[diskByte] == 0x0){
-      freeDir = diskByte;
-    }
+   readSector(map, 256);
+   readSector(fileDir, 257);
 
-
-    diskByte = diskByte + 32;
-  }
-
-  if (freeDir == 0) {
-    error(3);
-    return;
-  }
-
-  //fill with zeros
-  for (i = 0; i < 32; ++i) {
-    disk[freeDir + i] = 0x0;
-  }
-
-  for (i = 0; i < y; ++i) {
-    if ( * (name + i) == 0x0) {
-      break;
-    }
-
-    disk[freeDir + i] = * (name + i);
-  }
-
-  for (i = 0; i < numberOfSectors; ++i) {
-    for (y = 0; y < 256; ++y) {
-      if (map[y] == 0x0) {
-        map[y] = 255;
-        disk[freeDir + 8 + i] = y;
-
-        writeSector(buffer, y);
-        buffer = buffer + 512;
-
-        //breaks us out of inner loop
-        y = 512;
+   for (counter; counter < 512; counter = counter + 32) {
+      if (strCmp(name, fileDir + counter) == 0){
+         error(1);
+         return;
       }
-    }
-  }
+   }
 
-  writeSector(map, 256);
-  writeSector(disk, 257);
+   diridx = findEmptySector(map);
 
-  return;
+   if (diridx == 600) {
+      error(2);
+      return;
+   }
+
+   //this should take care of the padding
+   strnCpy(filenameHolder, name, 6);
+   //insert name
+   map[diridx] = 255;
+   strnCpy(fileDir + diridx, filenameHolder, 6);
+   diridxCounter = diridx + 8;
+
+   counter = 0;
+   for (counter; counter < numberOfSectors; counter++) {
+      strnCpy(tempBuffer, emptyBuffer, 512);
+
+      tempidx = findEmptySector(map);
+
+      if (tempidx == 600) {
+         error(2);
+         return;
+      }
+
+      map[counter] = 255;
+      fileDir[diridxCounter] = counter;
+
+      //write sector will get the length right
+      strnCpy(tempBuffer, buffer + (counter * 512), 512);
+      writeSector(tempBuffer, counter);
+
+      tempidx = 600;
+   }
+
+   for (diridxCounter; diridxCounter < diridx + 32; diridxCounter++ ){
+      fileDir[diridxCounter] = 0;
+   }
+
+   writeSector(map, 256);
+   writeSector(fileDir, 257);
 }
+
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
   switch (ax) {
@@ -379,7 +383,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   case 6: writeSector(bx, cx); break;
   case 7: deleteFile(bx);  break;
   case 8: writeFile(bx, cx, dx); break;
-  case 11: interrupt(25,0,0,0,0); 
+  case 11: interrupt(25,0,0,0,0);
   case 12: clearScreen(bx, cx); break;
   case 13: printInt(bx, cx); break;
   case 14: readInt(bx); break;
