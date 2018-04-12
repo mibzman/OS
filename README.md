@@ -15,17 +15,19 @@
 #### Currently on startup the OS:
 
 1. sets a color scheme (currently l33t HAXOR) from the config file on the floppy
-3. Loads a test program (fib.c)
-4. Runs the program
-	The programs asks for a number input and then prints that number of fibonacci numbers
+2. loads a shell
 
 This can be tested by running compileOS.sh.  The result should run in the boch emulator.
 
-### Notes:
-
-- (Resolved?) Currently the OS has been observed to crash on startup. This occurs sporadically, and when run again (rarely after as many as 3 attempts) the machine boots as expected. The cause of this is currently unknown.
-
-- compileOS.sh attempts to copy the contents of the config after bochs exits, however this command will not be run if force exited.
+- boot - Reboot the system 
+- cls - Clear the screen 
+- copy file1 file2 - Create file2 and copy all bytes of file1 to file2 without deleting file1. 
+- del filename - Delete the named file 
+- dir - List disk directory contents 
+- echo comment - Display comment on screen followed by a new line (multiple spaces/tabs may be reduced to a single space); if no argument simply issue a new prompt.  
+- help - Display the user manual lprint filename - Load filename into memory and print its contents (to the printer) using interrupt 
+- setenv fg color - change foreground color 
+- setenv bg color - tweet filename Create a text file. Prompt the user for a line of text (shorter than 140 characters). Store it in a buffer and write this buffer to a file called filename.type filename - - - Load filename into memory and display its contents onscreen using interrupt 33 calls. \0
 
 
 ## ACADEMIC INTEGRITY PLEDGE 
