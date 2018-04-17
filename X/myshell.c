@@ -35,11 +35,20 @@
  * and execv. 
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <stdlib.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+// #include <sys/types.h>
+// #include <errno.h>
+// #include <dirent.h>
+// #include <grp.h>
+// #include <pwd.h>
+// #include <time.h>
 
 #define MAX_ARGS	64
 #define MAX_ARG_LEN	16
@@ -48,14 +57,49 @@
 
 struct command_t {
    char *name;
-   int argc;
-   char *argv[MAX_ARGS];
+   int argc; //arg count
+   char *argv[MAX_ARGS]; //arg values
 };
 
 /* Function prototypes */
 int parseCommand(char *, struct command_t *);
 void printPrompt();
 void readCommand(char *);
+
+void cp(char* file1, char* file2) {
+  FILE *stream1, *stream2;
+
+  stream1 = fopen(file1, "r");
+  if(stream1 == NULL) {
+    perror("cp: file1 not found");
+    return;
+  }
+
+  //make the file if it doesn't exist
+  stream2 = fopen(file2, "ab+");
+  fclose(stream2);
+
+  stream2 = fopen(file2,"w+");
+  if(stream2 == NULL) {
+    perror("cp: file2 not found");
+    fclose(stream1);
+    return;
+  }
+
+  if(open(file2, O_WRONLY) < 0 || open(file1, O_RDONLY) < 0)
+  {
+    perror("cp: access denied");
+    return;
+  }
+
+  char temp;
+  while((temp = getc(stream1)) != EOF) {
+    putc(temp, stream2);
+  }
+
+  fclose(stream1);
+  fclose(stream2);
+}
 
 int main(int argc, char *argv[]) {
    int pid;
@@ -73,13 +117,24 @@ int main(int argc, char *argv[]) {
       // printf(command.name);
       command.argv[command.argc] = NULL;
 
-      /* Create a child process to execute the command */
-      if ((pid = fork()) == 0) {
-         /* Child executing command */
-         execvp(command.name, command.argv);
+      if(strcmp(command.name,"C") == 0) {
+        char* file1 = command.argv[1];
+        char* file2 = command.argv[2];
+        if(command.argc > 2 && strlen(file1) > 0 && strlen(file2) > 0) {
+          cp(file1,file2);
+        }
+        else {
+          printf("insufficient parameters\n");
+        }
+      } else {
+        /* Create a child process to execute the command */
+        if ((pid = fork()) == 0) {
+           /* Child executing command */
+           execvp(command.name, command.argv);
+        }
+        /* Wait for the child to terminate */
+        wait(&status);
       }
-      /* Wait for the child to terminate */
-      wait(&status);
    }
 
    /* Shell termination */
