@@ -51,10 +51,10 @@
 // #include <pwd.h>
 // #include <time.h>
 
-#define MAX_ARGS	64
-#define MAX_ARG_LEN	16
-#define MAX_LINE_LEN	80
-#define WHITESPACE	" ,\t\n"
+#define MAX_ARGS  64
+#define MAX_ARG_LEN 16
+#define MAX_LINE_LEN  80
+#define WHITESPACE  " ,\t\n"
 
 struct command_t {
    char *name;
@@ -106,7 +106,31 @@ int main(int argc, char *argv[]) {
         printf("\n");
       } else if(strcmp(command.name, "H") == 0) {
         printf("C file1 file2 Copy; create file2, copy all bytes of file1 to file2 without deleting file1. \n D file Delete; the named file. \n E comment Echo; display comment on screen followed by a new line\n H Help; display the user manual\n L List; the contents of the current directory; see below. \n M file Make; create the named text file by launching a text editor. \n P file Print; display the contents of the named file on screen. \n Q Quit; the shell. \n S Surf; the web by launching a browser as a background process. \n W Wipe; clear the screen. \n X program Execute; the named program. \n");
-      } else {
+      } else if(strcmp(command.name, "M") == 0) {
+        char* file = command.argv[1];
+        if(command.argc > 1 && strlen(file) > 0) {
+
+          command.name = "nano";
+
+        } else {
+          printf("insufficient parameters\n");
+        }
+      }  else if(strcmp(command.name, "P") == 0) {
+        char* file = command.argv[1];
+        if(command.argc > 1 && strlen(file) > 0) {
+
+          command.name = "more";
+
+        } else {
+          printf("insufficient parameters\n");
+        }
+      } else if(strcmp(command.name, "S") == 0) {
+        command.name = "firefox&";
+      } else if(strcmp(command.name, "W") == 0) {
+        command.name = "clear";
+      } else if(strcmp(command.name, "Q") == 0) {
+        return
+      }  else {
       }
 
       /* Create a child process to execute the command */
@@ -140,7 +164,7 @@ int parseCommand(char *cLine, struct command_t *cmd) {
   int argc;
   char **clPtr;
   /* Initialization */
-  clPtr = &cLine;	/* cLine is the command line */
+  clPtr = &cLine; /* cLine is the command line */
   argc = 0;
   cmd->argv[argc] = (char *) malloc(MAX_ARG_LEN);
   /* Fill argv[] */
