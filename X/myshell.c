@@ -66,7 +66,7 @@ int parseCommand(char *, struct command_t *);
 void printPrompt();
 void readCommand(char *);
 
-void cp(char* file1, char* file2) {
+void copy(char* file1, char* file2) {
   FILE *stream1, *stream2;
 
   stream1 = fopen(file1, "r");
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
         char* file1 = command.argv[1];
         char* file2 = command.argv[2];
         if(command.argc > 2 && strlen(file1) > 0 && strlen(file2) > 0) {
-          cp(file1,file2);
+          copy(file1,file2);
         }
         else {
           printf("insufficient parameters\n");
