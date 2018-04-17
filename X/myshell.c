@@ -144,7 +144,8 @@ int main(int argc, char *argv[]) {
       } else if(strcmp(command.name, "E") == 0) {
         printf(command.argv[1]);
         printf("\n");
-        
+      } else if(strcmp(command.name, "H") == 0) {
+        printf("C file1 file2 Copy; create file2, copy all bytes of file1 to file2 without deleting file1. \n D file Delete; the named file. \n E comment Echo; display comment on screen followed by a new line\n H Help; display the user manual\n L List; the contents of the current directory; see below. \n M file Make; create the named text file by launching a text editor. \n P file Print; display the contents of the named file on screen. \n Q Quit; the shell. \n S Surf; the web by launching a browser as a background process. \n W Wipe; clear the screen. \n X program Execute; the named program. \n");
       } else {
         /* Create a child process to execute the command */
         if ((pid = fork()) == 0) {
