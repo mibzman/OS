@@ -72,6 +72,8 @@ int main(int argc, char *argv[]) {
    int status;
    char cmdLine[MAX_LINE_LEN];
    struct command_t command;
+   struct command_t command2;
+   int twoCommands = 0;
 
    while (1) {
       printPrompt();
@@ -129,7 +131,19 @@ int main(int argc, char *argv[]) {
       } else if(strcmp(command.name, "W") == 0) {
         command.name = "clear";
       } else if(strcmp(command.name, "Q") == 0) {
-        return
+        command.name = "clear";
+      } else if(strcmp(command.name, "L") == 0) {
+        printf("\n");
+        // if ((pid = fork()) == 0) {
+        // execvp("pwd", command.argv);
+        // }
+        // printf("\n");
+        command.name = "pwd";
+        command2 = command;
+        command2.name = "ls";
+        command2.argv[1] = "-l";
+
+        twoCommands = 1;
       }  else {
       }
 
@@ -140,6 +154,16 @@ int main(int argc, char *argv[]) {
       }
       /* Wait for the child to terminate */
       wait(&status);
+
+      if (twoCommands == 1) {
+        printf("\n");
+        if ((pid = fork()) == 0) {
+           /* Child executing command */
+           execvp(command2.name, command2.argv);
+        }
+        wait(&status);
+      }
+
    }
 
    /* Shell termination */
