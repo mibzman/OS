@@ -101,6 +101,14 @@ void copy(char* file1, char* file2) {
   fclose(stream2);
 }
 
+void delete(char* file) {
+  if (remove(file) == 0){
+    printf("Deleted\n");
+  } else {
+    printf("Unable to delete\n");
+  }
+}
+
 int main(int argc, char *argv[]) {
    int pid;
    int status;
@@ -117,13 +125,20 @@ int main(int argc, char *argv[]) {
       // printf(command.name);
       command.argv[command.argc] = NULL;
 
-      if(strcmp(command.name,"C") == 0) {
+      if(strcmp(command.name, "C") == 0) {
         char* file1 = command.argv[1];
         char* file2 = command.argv[2];
+
         if(command.argc > 2 && strlen(file1) > 0 && strlen(file2) > 0) {
-          copy(file1,file2);
+          copy(file1, file2);
+        } else {
+          printf("insufficient parameters\n");
         }
-        else {
+      } else if(strcmp(command.name, "D") == 0) {
+        char* file = command.argv[1];
+        if(command.argc > 1 && strlen(file) > 0) {
+          delete(file);
+        } else {
           printf("insufficient parameters\n");
         }
       } else {
