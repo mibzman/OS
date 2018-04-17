@@ -141,6 +141,10 @@ int main(int argc, char *argv[]) {
         } else {
           printf("insufficient parameters\n");
         }
+      } else if(strcmp(command.name, "E") == 0) {
+        printf(command.argv[1]);
+        printf("\n");
+        
       } else {
         /* Create a child process to execute the command */
         if ((pid = fork()) == 0) {
