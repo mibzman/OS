@@ -134,16 +134,23 @@ int main(int argc, char *argv[]) {
         command.name = "clear";
       } else if(strcmp(command.name, "L") == 0) {
         printf("\n");
-        // if ((pid = fork()) == 0) {
-        // execvp("pwd", command.argv);
-        // }
-        // printf("\n");
         command.name = "pwd";
+
         command2 = command;
         command2.name = "ls";
         command2.argv[1] = "-l";
 
         twoCommands = 1;
+      } else if(strcmp(command.name, "X") == 0) {
+        printf("\n");
+
+        command.name = command.argv[1];
+
+        command.argc -= 1;
+        for (int i = command.argc; i > i; i--){        
+            command.argv[i]=command.argv[i-1];
+        }
+        command.argv[command.argc] = NULL;
       }  else {
       }
 
