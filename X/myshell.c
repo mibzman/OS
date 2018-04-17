@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
       // ...
       parseCommand(cmdLine, &command);
       // ...
+      // printf(command.name);
       command.argv[command.argc] = NULL;
 
       /* Create a child process to execute the command */
@@ -100,22 +101,23 @@ int main(int argc, char *argv[]) {
  * we increment argc.
  */
 int parseCommand(char *cLine, struct command_t *cmd) {
-   int argc;
-   char **clPtr;
-   /* Initialization */
-   clPtr = &cLine;	/* cLine is the command line */
-   argc = 0;
-   cmd->argv[argc] = (char *) malloc(MAX_ARG_LEN);
-   /* Fill argv[] */
-   while ((cmd->argv[argc] = strsep(clPtr, WHITESPACE)) != NULL) {
-      cmd->argv[++argc] = (char *) malloc(MAX_ARG_LEN);
-   }
+  int argc;
+  char **clPtr;
+  /* Initialization */
+  clPtr = &cLine;	/* cLine is the command line */
+  argc = 0;
+  cmd->argv[argc] = (char *) malloc(MAX_ARG_LEN);
+  /* Fill argv[] */
+  while ((cmd->argv[argc] = strsep(clPtr, WHITESPACE)) != NULL) {
+    cmd->argv[++argc] = (char *) malloc(MAX_ARG_LEN);
+  }
 
-   /* Set the command name and argc */
-   cmd->argc = argc-1;
-   cmd->name = (char *) malloc(sizeof(cmd->argv[0]));
-   strcpy(cmd->name, cmd->argv[0]);
-   return 1;
+  /* Set the command name and argc */
+  cmd->argc = argc-1;
+  cmd->name = (char *) malloc(sizeof(cmd->argv[0]));
+  strcpy(cmd->name, cmd->argv[0]);
+
+  return 1;
 }
 
 /* End parseCommand function */
