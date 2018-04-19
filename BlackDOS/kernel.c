@@ -190,7 +190,7 @@ int strCmp(char a[], char b[]) {
   int i = 0;
   for (i;; i++) {
     if (a[i] != b[i]) {
-      return a[i] < b[i] ? -1 : 1;
+      return 1;
     }
 
     if (a[i] == '\0') {
@@ -206,7 +206,7 @@ void readFile(char * fname, char * buffer, int * size) {
   readSector(dir, 257);
 
   for (; i < 16; i++) {
-    if (strCmp(fname, & dir[bufferCounter])) {
+    if (!strCmp(fname, & dir[bufferCounter])) {
 
       counter = bufferCounter + 8;
 
