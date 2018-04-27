@@ -67,12 +67,7 @@ void * agent(void * arg) {
 
         P(&agentHasJob, &agent_c, &mainMutex);
 
-        // while (agentHasJob == 0) {
-        //     waitOn(&agent_c, &mainMutex);
-        // }
-
         printf("-------------------------------\n");
-
         printf("agent stuff ******************************\n");
 
         int randNum = getRand(3);
@@ -116,10 +111,6 @@ void * paperPusher(void * arg) {
         P(&hasPaper, &paper, &mainMutex);
 
         usleep(getRand(200) * 1000);
-        while (hasPaper == 0) {
-            //wait until we are called an allowed to proceed
-            waitOn(&paper, &mainMutex);
-        }
 
         if (hasMatch == 1) {
             hasMatch = 0;
@@ -149,9 +140,6 @@ void * matchPusher(void * arg) {
 
         usleep(getRand(200) * 1000);
 
-        // while (hasMatch == 0)
-        //     waitOn(&match, &mainMutex);
-
         if (hasPaper == 1) {
             hasPaper = 0;
             agentHasJob = 0;
@@ -178,9 +166,6 @@ void * tobaccoPusher(void * arg) {
 
         usleep(getRand(200) * 1000);
 
-        // while (hasTobacco == 0)
-        //     waitOn(&tobacco, &mainMutex);
-
         if (hasMatch == 1) {
             hasMatch = 0;
             agentHasJob = 0;
@@ -203,9 +188,7 @@ void * tobaccoPusher(void * arg) {
 // **************SMOKERS********************
 
 void * tobaccoSmoker(void * arg) {
-
     while (1) {
-
         P(&tobaccoSmokerHasJob, &tobaccoSmoker_c, &smoker);
 
         hasPaper = 0;
@@ -223,20 +206,16 @@ void * tobaccoSmoker(void * arg) {
 }
 
 void * paperSmoker(void * arg) {
-
     while (1) {
-
         P(&paperSmokerHasJob, &paperSmoker_c, &smoker);
-        // while (paperSmokerHasJob == 0) {
-        //     waitOn(&paperSmoker_c, &smoker);
-        // }
 
-        hasTobacco = 0;
-        hasMatch = 0;
-        paperSmokerHasJob = 0;
-        agentHasJob = 1;
-        printf("Paper Smoker: making & smoking cigarette...\n");
-        usleep(getRand(50) * 1000);
+            hasTobacco = 0;
+            hasMatch = 0;
+            paperSmokerHasJob = 0;
+            agentHasJob = 1;
+
+            printf("Paper Smoker: making & smoking cigarette...\n");
+            usleep(getRand(50) * 1000);
         
         V(&smoker);
         printf("Paper Smoker: Smoked...\n");
@@ -246,20 +225,16 @@ void * paperSmoker(void * arg) {
 }
 
 void * matchSmoker(void * arg) {
-
     while (1) {
-
         P(&matchSmokerHasJob, &matchSmoker_c, &smoker);
-        // while (matchSmokerHasJob == 0) {
-        //     waitOn(&matchSmoker_c, &smoker);
-        // }
 
-        hasPaper = 0;
-        hasTobacco = 0;
-        matchSmokerHasJob = 0;
-        agentHasJob = 1;
-        printf("Match Smoker: making & smoking cigarette...\n");
-        usleep(getRand(50) * 1000);
+            hasPaper = 0;
+            hasTobacco = 0;
+            matchSmokerHasJob = 0;
+            agentHasJob = 1;
+
+            printf("Match Smoker: making & smoking cigarette...\n");
+            usleep(getRand(50) * 1000);
         
         V(&smoker);
         printf("Match Smoker: Smoked...\n");
