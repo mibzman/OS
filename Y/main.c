@@ -67,37 +67,37 @@ void * agent(void * arg) {
 
         P(&agentHasJob, &agent_c, &mainMutex);
 
-        printf("-------------------------------\n");
-        printf("agent stuff ******************************\n");
+            printf("-------------------------------\n");
+            printf("agent stuff ******************************\n");
 
-        int randNum = getRand(3);
+            int randNum = getRand(3);
 
-        if (randNum == 0) {
+            if (randNum == 0) {
 
-            agentHasJob = 0;
-            hasMatch = 1;
-            hasPaper = 1;
-            printf("Put paper and match\n");
-            wake(&paper);
-            wake(&match);
+                agentHasJob = 0;
+                hasMatch = 1;
+                hasPaper = 1;
+                printf("Put paper and match\n");
+                wake(&paper);
+                wake(&match);
 
-        } else if (randNum == 1) {
-            agentHasJob = 0;
-            hasMatch = 1;
-            hasTobacco = 1;
-            printf("Put tobacco and match\n");
-            wake(&paper);
-            wake(&match);
-        } else if (randNum == 2 ) {
-            agentHasJob = 0;
-            hasTobacco = 1;
-            hasPaper = 1;
-            printf("Put paper and tobacco\n");
-            wake(&paper);
-            wake(&tobacco);
-        }
+            } else if (randNum == 1) {
+                agentHasJob = 0;
+                hasMatch = 1;
+                hasTobacco = 1;
+                printf("Put tobacco and match\n");
+                wake(&paper);
+                wake(&match);
+            } else if (randNum == 2 ) {
+                agentHasJob = 0;
+                hasTobacco = 1;
+                hasPaper = 1;
+                printf("Put paper and tobacco\n");
+                wake(&paper);
+                wake(&tobacco);
+            }
 
-        printf("******************************\n");
+            printf("******************************\n");
         V(&mainMutex);
     }
     return 0;
@@ -110,23 +110,23 @@ void * paperPusher(void * arg) {
 
         P(&hasPaper, &paper, &mainMutex);
 
-        usleep(getRand(200) * 1000);
+            usleep(getRand(200) * 1000);
 
-        if (hasMatch == 1) {
-            hasMatch = 0;
-            agentHasJob = 0;
-            tobaccoSmokerHasJob = 1;
-            printf("Call the tobacco smoker\n");
-            wake(&tobaccoSmoker_c);
-        }
+            if (hasMatch == 1) {
+                hasMatch = 0;
+                agentHasJob = 0;
+                tobaccoSmokerHasJob = 1;
+                printf("Call the tobacco smoker\n");
+                wake(&tobaccoSmoker_c);
+            }
 
-        if (hasTobacco == 1) {
-            hasTobacco = 0;
-            agentHasJob = 0;
-            matchSmokerHasJob = 1;
-            printf("Call the match smoker\n");
-            wake(&matchSmoker_c);
-        }
+            if (hasTobacco == 1) {
+                hasTobacco = 0;
+                agentHasJob = 0;
+                matchSmokerHasJob = 1;
+                printf("Call the match smoker\n");
+                wake(&matchSmoker_c);
+            }
         V(&mainMutex);
     }
 
@@ -138,22 +138,22 @@ void * matchPusher(void * arg) {
     while (1) {
         P(&hasMatch, &match, &mainMutex);
 
-        usleep(getRand(200) * 1000);
+            usleep(getRand(200) * 1000);
 
-        if (hasPaper == 1) {
-            hasPaper = 0;
-            agentHasJob = 0;
-            tobaccoSmokerHasJob = 1;
-            printf("Call the tobacco smoker\n");
-            wake(&tobaccoSmoker_c);
-        }
-        if (hasTobacco == 1) {
-            hasTobacco = 0;
-            agentHasJob = 0;
-            paperSmokerHasJob = 1;
-            printf("Call the paper smoker\n");
-            wake(&paperSmoker_c);
-        }
+            if (hasPaper == 1) {
+                hasPaper = 0;
+                agentHasJob = 0;
+                tobaccoSmokerHasJob = 1;
+                printf("Call the tobacco smoker\n");
+                wake(&tobaccoSmoker_c);
+            }
+            if (hasTobacco == 1) {
+                hasTobacco = 0;
+                agentHasJob = 0;
+                paperSmokerHasJob = 1;
+                printf("Call the paper smoker\n");
+                wake(&paperSmoker_c);
+            }
         V(&mainMutex);
     }
 
@@ -164,22 +164,22 @@ void * tobaccoPusher(void * arg) {
     while (1) {
         P(&hasTobacco, &tobacco, &mainMutex);
 
-        usleep(getRand(200) * 1000);
+            usleep(getRand(200) * 1000);
 
-        if (hasMatch == 1) {
-            hasMatch = 0;
-            agentHasJob = 0;
-            paperSmokerHasJob = 1;
-            printf("Call the paper smoker\n");
-            wake(&paperSmoker_c);
-        }
-        if (hasPaper == 1) {
-            hasTobacco = 0;
-            agentHasJob = 0;
-            matchSmokerHasJob = 1;
-            printf("Call the match smoker\n");
-            wake(&matchSmoker_c);
-        }
+            if (hasMatch == 1) {
+                hasMatch = 0;
+                agentHasJob = 0;
+                paperSmokerHasJob = 1;
+                printf("Call the paper smoker\n");
+                wake(&paperSmoker_c);
+            }
+            if (hasPaper == 1) {
+                hasTobacco = 0;
+                agentHasJob = 0;
+                matchSmokerHasJob = 1;
+                printf("Call the match smoker\n");
+                wake(&matchSmoker_c);
+            }
         V(&mainMutex);
     }
     return 0 ;
@@ -191,12 +191,12 @@ void * tobaccoSmoker(void * arg) {
     while (1) {
         P(&tobaccoSmokerHasJob, &tobaccoSmoker_c, &smoker);
 
-        hasPaper = 0;
-        hasMatch = 0;
-        tobaccoSmokerHasJob = 0;
-        agentHasJob = 1;
-        printf("Tobacco Smoker: making & smoking cigarette...\n");
-        usleep(getRand(50) * 1000);
+            hasPaper = 0;
+            hasMatch = 0;
+            tobaccoSmokerHasJob = 0;
+            agentHasJob = 1;
+            printf("Tobacco Smoker: making & smoking cigarette...\n");
+            usleep(getRand(50) * 1000);
         
         V(&smoker);
         printf("Tobacco Smoker: Smoked...\n");
