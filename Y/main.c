@@ -27,6 +27,7 @@ int tobaccoSmokerHasJob = 0;
 int matchSmokerHasJob = 0;
 int paperSmokerHasJob = 0;
 
+//**************utils**********
 int getRand(int range) {
     return rand() % range;
 }
@@ -43,6 +44,19 @@ void waitOn(pthread_cond_t *c, pthread_mutex_t * m) {
     pthread_cond_wait(c, m);
 }
 
+void wake(pthread_cond_t *c) {
+    pthread_cond_signal(c);
+}
+
+void tryStartThread(pthread_t * t, void * f){
+    if (pthread_create(t, NULL, f, NULL) != 0) {
+        fprintf (stderr, "Cannot create thread\n");
+        exit (1);
+    }
+}
+
+//**************main agent*******************
+
 void * agent(void * arg) {
 
     while (1) {
@@ -56,7 +70,7 @@ void * agent(void * arg) {
 
         printf("-------------------------------\n");
 
-        printf("******************************\n");
+        printf("agent stuff ******************************\n");
 
         int randNum = getRand(3);
 
@@ -65,24 +79,24 @@ void * agent(void * arg) {
             agentHasJob = 0;
             hasMatch = 1;
             hasPaper = 1;
-            puts("Put paper and match");
-            pthread_cond_signal(&paper);
-            pthread_cond_signal(&match);
+            printf("Put paper and match\n");
+            wake(&paper);
+            wake(&match);
 
         } else if (randNum == 1) {
             agentHasJob = 0;
             hasMatch = 1;
             hasTobacco = 1;
-            puts("Put tobacco and match");
-            pthread_cond_signal(&paper);
-            pthread_cond_signal(&match);
+            printf("Put tobacco and match\n");
+            wake(&paper);
+            wake(&match);
         } else if (randNum == 2 ) {
             agentHasJob = 0;
             hasTobacco = 1;
             hasPaper = 1;
-            puts("Put paper and tobacco");
-            pthread_cond_signal(&paper);
-            pthread_cond_signal(&tobacco);
+            printf("Put paper and tobacco\n");
+            wake(&paper);
+            wake(&tobacco);
         }
 
         printf("******************************\n");
@@ -96,7 +110,9 @@ void * agent(void * arg) {
 void * paperPusher(void * arg) {
     while (1) {
 
-        pthread_mutex_lock(&mainMutex);
+        P(&mainMutex);
+
+        usleep(getRand(200) * 1000);
         while (hasPaper == 0) {
             //wait until we are called an allowed to proceed
             waitOn(&paper, &mainMutex);
@@ -106,16 +122,16 @@ void * paperPusher(void * arg) {
             hasMatch = 0;
             agentHasJob = 0;
             tobaccoSmokerHasJob = 1;
-            puts("Call the tobacco smoker");
-            pthread_cond_signal(&tobaccoSmoker_c);
+            printf("Call the tobacco smoker\n");
+            wake(&tobaccoSmoker_c);
         }
 
         if (hasTobacco == 1) {
             hasTobacco = 0;
             agentHasJob = 0;
             matchSmokerHasJob = 1;
-            puts("Call the match smoker");
-            pthread_cond_signal(&matchSmoker_c);
+            printf("Call the match smoker\n");
+            wake(&matchSmoker_c);
         }
         V(&mainMutex);
     }
@@ -126,7 +142,10 @@ void * paperPusher(void * arg) {
 void * matchPusher(void * arg) {
 
     while (1) {
-        pthread_mutex_lock(&mainMutex);
+        P(&mainMutex);
+
+        usleep(getRand(200) * 1000);
+
         while (hasMatch == 0)
             waitOn(&match, &mainMutex);
 
@@ -134,15 +153,15 @@ void * matchPusher(void * arg) {
             hasPaper = 0;
             agentHasJob = 0;
             tobaccoSmokerHasJob = 1;
-            puts("Call the tobacco smoker");
-            pthread_cond_signal(&tobaccoSmoker_c);
+            printf("Call the tobacco smoker\n");
+            wake(&tobaccoSmoker_c);
         }
         if (hasTobacco == 1) {
             hasTobacco = 0;
             agentHasJob = 0;
             paperSmokerHasJob = 1;
-            puts("Call the paper smoker");
-            pthread_cond_signal(&paperSmoker_c);
+            printf("Call the paper smoker\n");
+            wake(&paperSmoker_c);
         }
         V(&mainMutex);
     }
@@ -152,7 +171,10 @@ void * matchPusher(void * arg) {
 
 void * tobaccoPusher(void * arg) {
     while (1) {
-        pthread_mutex_lock(&mainMutex);
+        P(&mainMutex);
+
+        usleep(getRand(200) * 1000);
+
         while (hasTobacco == 0)
             waitOn(&tobacco, &mainMutex);
 
@@ -160,15 +182,15 @@ void * tobaccoPusher(void * arg) {
             hasMatch = 0;
             agentHasJob = 0;
             paperSmokerHasJob = 1;
-            puts("Call the paper smoker");
-            pthread_cond_signal(&paperSmoker_c);
+            printf("Call the paper smoker\n");
+            wake(&paperSmoker_c);
         }
         if (hasPaper == 1) {
             hasTobacco = 0;
             agentHasJob = 0;
             matchSmokerHasJob = 1;
-            puts("Call the match smoker");
-            pthread_cond_signal(&matchSmoker_c);
+            printf("Call the match smoker\n");
+            wake(&matchSmoker_c);
         }
         V(&mainMutex);
     }
@@ -181,7 +203,7 @@ void * tobaccoSmoker(void * arg) {
 
     while (1) {
 
-        pthread_mutex_lock(&smoker);
+        P(&smoker);
         while (tobaccoSmokerHasJob == 0) {
             waitOn(&tobaccoSmoker_c, &smoker);
         }
@@ -190,10 +212,11 @@ void * tobaccoSmoker(void * arg) {
         hasMatch = 0;
         tobaccoSmokerHasJob = 0;
         agentHasJob = 1;
-        puts("Tobacco Smoker: make cigarette...");
+        printf("Tobacco Smoker: making & smoking cigarette...\n");
+        usleep(getRand(50) * 1000);
+        
         V(&smoker);
-
-        puts("Tobacco Smoker: Smoking...");
+        printf("Tobacco Smoker: Smoked...\n");
     }
 
     return 0;
@@ -203,7 +226,7 @@ void * paperSmoker(void * arg) {
 
     while (1) {
 
-        pthread_mutex_lock(&smoker);
+        P(&smoker);
         while (paperSmokerHasJob == 0) {
             waitOn(&paperSmoker_c, &smoker);
         }
@@ -211,10 +234,11 @@ void * paperSmoker(void * arg) {
         hasMatch = 0;
         paperSmokerHasJob = 0;
         agentHasJob = 1;
-        puts("Paper Smoker: make cigarette...");
+        printf("Paper Smoker: making & smoking cigarette...\n");
+        usleep(getRand(50) * 1000);
+        
         V(&smoker);
-
-        puts("Paper Smoker: Smoking...");
+        printf("Paper Smoker: Smoked...\n");
     }
 
     return 0;
@@ -224,7 +248,7 @@ void * matchSmoker(void * arg) {
 
     while (1) {
 
-        pthread_mutex_lock(&smoker);
+        P(&smoker);
         while (matchSmokerHasJob == 0) {
             waitOn(&matchSmoker_c, &smoker);
         }
@@ -232,15 +256,15 @@ void * matchSmoker(void * arg) {
         hasTobacco = 0;
         matchSmokerHasJob = 0;
         agentHasJob = 1;
-        puts("Match Smoker: make cigarette...");
+        printf("Match Smoker: making & smoking cigarette...\n");
+        usleep(getRand(50) * 1000);
+        
         V(&smoker);
-
-        puts("Match Smoker: Smoking...");
+        printf("Match Smoker: Smoked...\n");
     }
 
     return 0;
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -259,40 +283,13 @@ int main(int argc, char *argv[])
     time_t t;
     srand((unsigned) time(&t));
 
-    if (pthread_create(&agentThread, NULL, agent, NULL) != 0) {
-        fprintf (stderr, "Cannot create agentThread thread\n");
-        exit (1);
-    }
-
-    if (pthread_create(&tobaccoPusher_t, NULL, tobaccoPusher, NULL) != 0) {
-        fprintf (stderr, "Cannot create tobaccoPusher_t thread\n");
-        exit (1);
-    }
-
-    if (pthread_create(&paperPusher_t, NULL, paperPusher, NULL) != 0) {
-        fprintf (stderr, "Cannot create paperPusher_t thread\n");
-        exit (1);
-    }
-
-    if (pthread_create(&matchPusher_t, NULL, matchPusher, NULL) != 0) {
-        fprintf (stderr, "Cannot create matchPusher_t thread\n");
-        exit (1);
-    }
-
-    if (pthread_create(&tobaccoSmoker_t, NULL, tobaccoSmoker, NULL) != 0) {
-        fprintf (stderr, "Cannot create tobaccoSmoker_t thread\n");
-        exit (1);
-    }
-
-    if (pthread_create(&paperSmoker_t, NULL, paperSmoker, NULL) != 0) {
-        fprintf (stderr, "Cannot create paperSmoker_t thread\n");
-        exit (1);
-    }
-
-    if (pthread_create(&matchSmoker_t, NULL, matchSmoker, NULL) != 0) {
-        fprintf (stderr, "Cannot create matchSmoker_t thread\n");
-        exit (1);
-    }
+    tryStartThread(&agentThread, agent);
+    tryStartThread(&tobaccoPusher_t, tobaccoPusher);
+    tryStartThread(&paperPusher_t, paperPusher);
+    tryStartThread(&matchPusher_t, matchPusher);
+    tryStartThread(&tobaccoSmoker_t, tobaccoSmoker);
+    tryStartThread(&paperSmoker_t, paperSmoker);
+    tryStartThread(&matchSmoker_t, matchSmoker);
 
     pthread_join(agentThread, NULL);
     pthread_join(tobaccoPusher_t, NULL);
