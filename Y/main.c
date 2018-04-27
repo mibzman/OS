@@ -32,16 +32,19 @@ int getRand(int range) {
     return rand() % range;
 }
 
-void P(pthread_mutex_t * m) {
+void waitOn(pthread_cond_t *c, pthread_mutex_t * m) {
+    pthread_cond_wait(c, m);
+}
+
+void P(int * j, pthread_cond_t * threadCond, pthread_mutex_t * m) {
     pthread_mutex_lock(m);
+    while (*j == 0) {
+        waitOn(threadCond, m);
+    }
 }
 
 void V(pthread_mutex_t * m) {
     pthread_mutex_unlock(m);
-}
-
-void waitOn(pthread_cond_t *c, pthread_mutex_t * m) {
-    pthread_cond_wait(c, m);
 }
 
 void wake(pthread_cond_t *c) {
@@ -62,11 +65,11 @@ void * agent(void * arg) {
     while (1) {
         sleep(1);
 
-        P(&mainMutex);
+        P(&agentHasJob, &agent_c, &mainMutex);
 
-        while (agentHasJob == 0) {
-            waitOn(&agent_c, &mainMutex);
-        }
+        // while (agentHasJob == 0) {
+        //     waitOn(&agent_c, &mainMutex);
+        // }
 
         printf("-------------------------------\n");
 
@@ -110,7 +113,7 @@ void * agent(void * arg) {
 void * paperPusher(void * arg) {
     while (1) {
 
-        P(&mainMutex);
+        P(&hasPaper, &paper, &mainMutex);
 
         usleep(getRand(200) * 1000);
         while (hasPaper == 0) {
@@ -142,12 +145,12 @@ void * paperPusher(void * arg) {
 void * matchPusher(void * arg) {
 
     while (1) {
-        P(&mainMutex);
+        P(&hasMatch, &match, &mainMutex);
 
         usleep(getRand(200) * 1000);
 
-        while (hasMatch == 0)
-            waitOn(&match, &mainMutex);
+        // while (hasMatch == 0)
+        //     waitOn(&match, &mainMutex);
 
         if (hasPaper == 1) {
             hasPaper = 0;
@@ -171,12 +174,12 @@ void * matchPusher(void * arg) {
 
 void * tobaccoPusher(void * arg) {
     while (1) {
-        P(&mainMutex);
+        P(&hasTobacco, &tobacco, &mainMutex);
 
         usleep(getRand(200) * 1000);
 
-        while (hasTobacco == 0)
-            waitOn(&tobacco, &mainMutex);
+        // while (hasTobacco == 0)
+        //     waitOn(&tobacco, &mainMutex);
 
         if (hasMatch == 1) {
             hasMatch = 0;
@@ -203,10 +206,7 @@ void * tobaccoSmoker(void * arg) {
 
     while (1) {
 
-        P(&smoker);
-        while (tobaccoSmokerHasJob == 0) {
-            waitOn(&tobaccoSmoker_c, &smoker);
-        }
+        P(&tobaccoSmokerHasJob, &tobaccoSmoker_c, &smoker);
 
         hasPaper = 0;
         hasMatch = 0;
@@ -226,10 +226,11 @@ void * paperSmoker(void * arg) {
 
     while (1) {
 
-        P(&smoker);
-        while (paperSmokerHasJob == 0) {
-            waitOn(&paperSmoker_c, &smoker);
-        }
+        P(&paperSmokerHasJob, &paperSmoker_c, &smoker);
+        // while (paperSmokerHasJob == 0) {
+        //     waitOn(&paperSmoker_c, &smoker);
+        // }
+
         hasTobacco = 0;
         hasMatch = 0;
         paperSmokerHasJob = 0;
@@ -248,10 +249,11 @@ void * matchSmoker(void * arg) {
 
     while (1) {
 
-        P(&smoker);
-        while (matchSmokerHasJob == 0) {
-            waitOn(&matchSmoker_c, &smoker);
-        }
+        P(&matchSmokerHasJob, &matchSmoker_c, &smoker);
+        // while (matchSmokerHasJob == 0) {
+        //     waitOn(&matchSmoker_c, &smoker);
+        // }
+
         hasPaper = 0;
         hasTobacco = 0;
         matchSmokerHasJob = 0;
