@@ -1,54 +1,43 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <time.h>
 #include <unistd.h>
+#include <semaphore.h>
 
-pthread_mutex_t mainMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t smoker = PTHREAD_MUTEX_INITIALIZER;
+sem_t agentSem = 1,
+	tobacco = 0,
+	paper = 0,
+	match = 0;
 
-//actors conditionals
-pthread_cond_t agent_c = PTHREAD_COND_INITIALIZER;
-pthread_cond_t tobaccoSmoker_c = PTHREAD_COND_INITIALIZER;
-pthread_cond_t matchSmoker_c = PTHREAD_COND_INITIALIZER;
-pthread_cond_t paperSmoker_c = PTHREAD_COND_INITIALIZER;
+bool isTobacco = false,
+	isPaper = false,
+	isMatch = false;
 
-//resource conditionals
-pthread_cond_t tobacco = PTHREAD_COND_INITIALIZER;
-pthread_cond_t paper = PTHREAD_COND_INITIALIZER;
-pthread_cond_t match = PTHREAD_COND_INITIALIZER;
+sem_t tobaccoSem = 0,
+	 paperSem = 0,
+	 matchSem = 0,
+	 mutex = 1;
 
-int hasTobacco = 0;
-int hasPaper = 0;
-int hasMatch = 0;
-
-int agentHasJob = 1;
-int tobaccoSmokerHasJob = 0;
-int matchSmokerHasJob = 0;
-int paperSmokerHasJob = 0;
-
-//**************utils**********
 int getRand(int range) {
     return rand() % range;
 }
 
-void waitOn(pthread_cond_t *c, pthread_mutex_t * m) {
-    pthread_cond_wait(c, m);
+void waitRandMili(int max){
+	//fast mode
+	usleep(getRand(max) * 1000);
+
+	//slow mode
+	// usleep(getRand(max) * 100000);
 }
 
-void P(int * j, pthread_cond_t * threadCond, pthread_mutex_t * m) {
-    pthread_mutex_lock(m);
-    while (*j == 0) {
-        waitOn(threadCond, m);
-    }
+void P(sem_t * m) {
+	sem_wait(m);
 }
 
-void V(pthread_mutex_t * m) {
-    pthread_mutex_unlock(m);
-}
-
-void wake(pthread_cond_t *c) {
-    pthread_cond_signal(c);
+void V(sem_t * m) {
+	sem_post(m);
 }
 
 void tryStartThread(pthread_t * t, void * f){
@@ -58,222 +47,235 @@ void tryStartThread(pthread_t * t, void * f){
     }
 }
 
-//**************main agent*******************
-
-void * agent(void * arg) {
-
-    while (1) {
-        sleep(1);
-
-        P(&agentHasJob, &agent_c, &mainMutex);
-
-            printf("-------------------------------\n");
-            printf("agent stuff ******************************\n");
-
-            int randNum = getRand(3);
-
-            if (randNum == 0) {
-
-                agentHasJob = 0;
-                hasMatch = 1;
-                hasPaper = 1;
-                printf("Put paper and match\n");
-                wake(&paper);
-                wake(&match);
-
-            } else if (randNum == 1) {
-                agentHasJob = 0;
-                hasMatch = 1;
-                hasTobacco = 1;
-                printf("Put tobacco and match\n");
-                wake(&paper);
-                wake(&match);
-            } else if (randNum == 2 ) {
-                agentHasJob = 0;
-                hasTobacco = 1;
-                hasPaper = 1;
-                printf("Put paper and tobacco\n");
-                wake(&paper);
-                wake(&tobacco);
-            }
-
-            printf("******************************\n");
-        V(&mainMutex);
-    }
-    return 0;
+bool isPaperHelper(){
+	if (isPaper){
+		isPaper = false;
+		return true;
+	}
+	return false;
 }
 
-// **********************PUSHERS********************
-
-void * paperPusher(void * arg) {
-    while (1) {
-
-        P(&hasPaper, &paper, &mainMutex);
-
-            usleep(getRand(200) * 1000);
-
-            if (hasMatch == 1) {
-                hasMatch = 0;
-                agentHasJob = 0;
-                tobaccoSmokerHasJob = 1;
-                printf("Call the tobacco smoker\n");
-                wake(&tobaccoSmoker_c);
-            }
-
-            if (hasTobacco == 1) {
-                hasTobacco = 0;
-                agentHasJob = 0;
-                matchSmokerHasJob = 1;
-                printf("Call the match smoker\n");
-                wake(&matchSmoker_c);
-            }
-        V(&mainMutex);
-    }
-
-    return 0 ;
+bool isMatchHelper(){
+	if (isMatch){
+		isMatch = false;
+		return true;
+	}
+	return false;
 }
 
-void * matchPusher(void * arg) {
-
-    while (1) {
-        P(&hasMatch, &match, &mainMutex);
-
-            usleep(getRand(200) * 1000);
-
-            if (hasPaper == 1) {
-                hasPaper = 0;
-                agentHasJob = 0;
-                tobaccoSmokerHasJob = 1;
-                printf("Call the tobacco smoker\n");
-                wake(&tobaccoSmoker_c);
-            }
-            if (hasTobacco == 1) {
-                hasTobacco = 0;
-                agentHasJob = 0;
-                paperSmokerHasJob = 1;
-                printf("Call the paper smoker\n");
-                wake(&paperSmoker_c);
-            }
-        V(&mainMutex);
-    }
-
-    return 0 ;
+bool isTobaccoHelper(){
+	if (isTobacco){
+		isTobacco = false;
+		return true;
+	}
+	return false;
 }
 
-void * tobaccoPusher(void * arg) {
-    while (1) {
-        P(&hasTobacco, &tobacco, &mainMutex);
-
-            usleep(getRand(200) * 1000);
-
-            if (hasMatch == 1) {
-                hasMatch = 0;
-                agentHasJob = 0;
-                paperSmokerHasJob = 1;
-                printf("Call the paper smoker\n");
-                wake(&paperSmoker_c);
-            }
-            if (hasPaper == 1) {
-                hasTobacco = 0;
-                agentHasJob = 0;
-                matchSmokerHasJob = 1;
-                printf("Call the match smoker\n");
-                wake(&matchSmoker_c);
-            }
-        V(&mainMutex);
-    }
-    return 0 ;
+// AGENTS******************************
+void * agentTP(void * arg) {
+	int counter = 0;
+	while (counter <= 5) {
+		waitRandMili(200);
+		P(&agentSem);
+		printf("Agent placed: TP\n");
+		counter++;
+		V(&tobacco);
+		V(&paper);
+	}
+	printf("agentTP exiting\n");
+	return NULL;
 }
 
-// **************SMOKERS********************
-
-void * tobaccoSmoker(void * arg) {
-    while (1) {
-        P(&tobaccoSmokerHasJob, &tobaccoSmoker_c, &smoker);
-
-            hasPaper = 0;
-            hasMatch = 0;
-            tobaccoSmokerHasJob = 0;
-            agentHasJob = 1;
-            printf("Tobacco Smoker: making & smoking cigarette...\n");
-            usleep(getRand(50) * 1000);
-        
-        V(&smoker);
-        printf("Tobacco Smoker: Smoked...\n");
-    }
-
-    return 0;
+void * agentTM(void * arg) {
+	int counter = 0;
+	while (counter <= 5) {
+		waitRandMili(200);
+		P(&agentSem);
+		printf("Agent placed: TM\n");
+		counter++;
+		V(&tobacco);
+		V(&match);
+	}
+	printf("agentTM exiting\n");
+	return NULL;
 }
 
-void * paperSmoker(void * arg) {
-    while (1) {
-        P(&paperSmokerHasJob, &paperSmoker_c, &smoker);
-
-            hasTobacco = 0;
-            hasMatch = 0;
-            paperSmokerHasJob = 0;
-            agentHasJob = 1;
-
-            printf("Paper Smoker: making & smoking cigarette...\n");
-            usleep(getRand(50) * 1000);
-        
-        V(&smoker);
-        printf("Paper Smoker: Smoked...\n");
-    }
-
-    return 0;
+void * agentPM(void * arg) {
+	int counter = 0;
+	while (counter <= 5) {
+		waitRandMili(200);
+		P(&agentSem);
+		printf("Agent placed: PM\n");
+		counter++;
+		V(&paper);
+		V(&match);
+	}
+	printf("agentPM exiting\n");
+	return NULL;
 }
 
-void * matchSmoker(void * arg) {
-    while (1) {
-        P(&matchSmokerHasJob, &matchSmoker_c, &smoker);
+//PUSHERS*********************
 
-            hasPaper = 0;
-            hasTobacco = 0;
-            matchSmokerHasJob = 0;
-            agentHasJob = 1;
+void * pusherT(void * arg) {
+	int counter = 0;
+	while (counter <= 12) {
+		P(&tobacco);
+		P(&mutex);
+		if (isPaperHelper()) {
+			V(&matchSem);
+		}
+		else if (isMatchHelper()) {
+			V(&paperSem);
+		}
+		else {
+			isTobacco = true;
+		}
+		V(&mutex);
+		counter++;
+	}
+	printf("pusherT exiting\n");
+	return NULL;
+}
 
-            printf("Match Smoker: making & smoking cigarette...\n");
-            usleep(getRand(50) * 1000);
-        
-        V(&smoker);
-        printf("Match Smoker: Smoked...\n");
-    }
+void * pusherP(void * arg) {
+	int counter = 0;
+	while (counter <= 12) {
+		P(&paper);
+		P(&mutex);
+		if (isTobaccoHelper()) {
+			V(&matchSem);
+		}
+		else if (isMatchHelper()) {
+			V(&tobaccoSem);
+		}
+		else {
+			isPaper = true;
+		}
+		V(&mutex);
+		counter++;
+	}
+	printf("pusherP exiting\n");
+	return NULL;
+}
 
-    return 0;
+void * pusherM(void * arg) {
+	int counter = 0;
+	while (counter <= 12) {
+		P(&match);
+		P(&mutex);
+		if (isTobaccoHelper()) {
+			V(&paperSem);
+		}
+		else if (isPaperHelper()) {
+			V(&tobaccoSem);
+		}
+		else {
+			isMatch = true;
+		}
+		V(&mutex);
+		counter++;
+	}
+	printf("pusherM exiting\n");
+	return NULL;
+}
+
+//SMOKERS***********************************
+
+void * smokerT(void * arg) {
+	int counter = 0;
+	while (counter <= 2) {
+		P(&tobaccoSem);
+		//rolling
+		printf("T Smoker: Rolling\n");
+		waitRandMili(50);
+		V(&agentSem);
+		//smoking
+		printf("T Smoker: Smoking\n");
+		waitRandMili(50);
+		counter++;
+	}
+	printf("smokerT exiting, smoked:%d\n", counter);
+	return NULL;
+}
+
+void * smokerP(void * arg) {
+	int counter = 0;
+	while (counter <= 2) {
+		P(&paperSem);
+		//rolling
+		printf("P Smoker: Rolling\n");
+		waitRandMili(50);
+		V(&agentSem);
+		//smoking
+		printf("P Smoker: Smoking\n");
+		waitRandMili(50);
+		counter++;
+	}
+	printf("smokerP exiting, smoked:%d\n", counter);
+	return NULL;
+}
+
+void * smokerM(void * arg) {
+	int counter = 0;
+	while (counter <= 2) {
+		P(&matchSem);
+		//rolling
+		printf("M Smoker: Rolling\n");
+		waitRandMili(50);
+		V(&agentSem);
+		//smoking
+		printf("M Smoker: Smoking\n");
+		waitRandMili(50);
+		counter++;
+	}
+	printf("smokerM exiting, smoked:%d\n", counter);
+	return NULL;
 }
 
 int main(int argc, char *argv[])
 {
-    pthread_t
-    agentThread,
+	pthread_t
+		agentTP_t,
+		agentTM_t,
+		agentPM_t,
 
-    tobaccoSmoker_t,
-    paperSmoker_t,
-    matchSmoker_t,
+		pusherT_t,
+		pusherP_t,
+		pusherM_t,
 
-    tobaccoPusher_t,
-    paperPusher_t,
-    matchPusher_t;
+		smokerT_t,
+		smokerP_t,
+		smokerM_t;
 
-    //random seed
-    time_t t;
-    srand((unsigned) time(&t));
+    tryStartThread(&agentTP_t, agentTP);
+    tryStartThread(&agentTM_t, agentTM);
+    tryStartThread(&agentPM_t, agentPM);
 
-    tryStartThread(&agentThread, agent);
-    tryStartThread(&tobaccoPusher_t, tobaccoPusher);
-    tryStartThread(&paperPusher_t, paperPusher);
-    tryStartThread(&matchPusher_t, matchPusher);
-    tryStartThread(&tobaccoSmoker_t, tobaccoSmoker);
-    tryStartThread(&paperSmoker_t, paperSmoker);
-    tryStartThread(&matchSmoker_t, matchSmoker);
+    tryStartThread(&pusherT_t, pusherM);
+    tryStartThread(&pusherP_t, pusherP);
+    tryStartThread(&pusherM_t, pusherT);
 
-    pthread_join(agentThread, NULL);
-    pthread_join(tobaccoPusher_t, NULL);
-    pthread_join(paperPusher_t, NULL);
-    pthread_join(matchPusher_t, NULL);
-    pthread_join(tobaccoSmoker_t, NULL);
-    pthread_join(paperSmoker_t, NULL);
-    pthread_join(matchSmoker_t, NULL);
+    tryStartThread(&smokerT_t, smokerT);
+    tryStartThread(&smokerP_t, smokerP);
+    tryStartThread(&smokerM_t, smokerM);
+
+    //twice as many smokers
+    tryStartThread(&smokerT_t, smokerT);
+    tryStartThread(&smokerP_t, smokerP);
+    tryStartThread(&smokerM_t, smokerM);
+
+    pthread_join(agentTP_t, NULL);
+    pthread_join(agentTM_t, NULL);
+    pthread_join(agentPM_t, NULL);
+
+    pthread_join(pusherT_t, NULL);
+    pthread_join(pusherP_t, NULL);
+    pthread_join(pusherM_t, NULL);
+
+    pthread_join(pusherT_t, NULL);
+    pthread_join(pusherP_t, NULL);
+    pthread_join(pusherM_t, NULL);
+
+    
 
 }
